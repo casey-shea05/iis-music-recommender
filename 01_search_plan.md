@@ -1,6 +1,6 @@
 # Search plan
 
-Problem sentence:  
+Problem sentence:  People discovering music through recommended playlists struggle to steer what they hear next because the system can't tell why they skipped or disliked a track.
 
 ## Concept blocks (two or three terms each; take synonyms from the first abstracts you read)
 
