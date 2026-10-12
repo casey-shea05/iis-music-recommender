@@ -11,9 +11,9 @@ Starting paper: [the one you chose]
 | Paper | Decision | Reason |
 |---|---|---|
 | Putting Users in Control of their Recommendations | `in` | Study of basic recommender systems (all criteria covered) |
-| Music Recommendation Systems … and How They Want to be Used | `in` | Study of user interactions with music recommendation features directly (all criteria covered) |
+| Music Recommendation Systems … and How They Want to be Used | `in` | Qualitative user study of music recommendation features (1, 3); finds satisfaction depends on perceived controllability and users want tools to influence recommendations (2) |
 | Recommendation Systems as Technologies of the Self: Algorithmic Control and the Formation of Music Taste  | `out` | More of a social study of how recommender systems can shape an individuals identity (fails criteria 2, weak on 3) |
-| Can We Listen To It Together?: Factors Influencing Reception of Music Recommendations and Post-Recommendation Behavior | `in` | Investigates factors that affect people’s decisions as to whether they choose to listen to music recommendations and how the recommendations impact their music-listening behaviors (all criteria covered) |
+| Can We Listen To It Together?: Factors Influencing Reception of Music Recommendations and Post-Recommendation Behavior | `flagged` | Music recommendation survey (1, 3); only loosely related to criterion 2: rationale for suggestions is one finding, but the focus is social recommending, not system control or explanation |
 | Explore, exploit, and explain: personalizing explainable recommendations with bandits | `flagged` | Music recommender with explanations (meets 1, 2) and live user testing, but the contribution is algorithmic and it measures engagement, not users' experience or sense of control (borderline on 3) |
 | A Live Concert Performance Recommender System Utilizing User Ideal and Antithesis Ideal Setlist Preferences | `in` | Music-domain recommender that combines user control via ideal/negative setlist preferences with explanations of recommendations (covers all 3 criteria) |
 | What's in a User? Towards Personalising Transparency for Music Recommender Interfaces | `in` | Music recommender user study (1, 3) testing how explanations affect perception and gaze (2); personality is a moderator, so it shows who benefits most from explanations |
