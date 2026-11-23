@@ -1,2 +1,13 @@
 #discovery files
 discovery/research-papers
+# Personal data and secrets
+data/catalogue.json
+.env
+
+# Build and tooling
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+.DS_Store
