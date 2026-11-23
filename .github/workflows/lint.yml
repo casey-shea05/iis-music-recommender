@@ -1,0 +1,36 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The app isn't scaffolded yet. Until package.json exists this job passes
+      # trivially; once it does, `npm run lint` must exist and pass.
+      - name: Detect Node project
+        id: node
+        run: |
+          if [ -f package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v4
+        if: steps.node.outputs.present == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        if: steps.node.outputs.present == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.node.outputs.present == 'true'
+        run: npm run lint
