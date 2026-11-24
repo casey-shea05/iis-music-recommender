@@ -9,6 +9,8 @@ import { createQueue, hasNext, hasPrevious, jumpTo, next, nowPlaying, previous, 
 
 export type Playback = {
   status: 'connecting' | 'spotify' | 'fake'
+  /** An engine is connected, so the controls work. False while `status` is 'connecting'. */
+  ready: boolean
   /** Why the fake engine is running; null otherwise. */
   fallbackReason: FallbackReason | null
   nowPlaying: CatalogueTrack | null
@@ -78,7 +80,7 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
   )
 
   /** Moves the cursor and plays the track there. A move past either end changes nothing. */
-  const playQueue = useCallback((target: Queue<CatalogueTrack>) => {
+  const moveCursorAndPlay = useCallback((target: Queue<CatalogueTrack>) => {
     const player = playerRef.current
     const track = nowPlaying(target)
     if (!player || !track || target === queueRef.current) return
@@ -107,7 +109,7 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
       })
       player.onTrackStarted((e) => setArtworkUrl(e.artworkUrl))
       player.onEnded(() => {
-        if (hasNext(queueRef.current)) return playQueue(next(queueRef.current))
+        if (hasNext(queueRef.current)) return moveCursorAndPlay(next(queueRef.current))
         // End of the queue: unload the track, so Play starts it again rather than resuming at its end.
         setPlaying(false)
         setLoadedId(null)
@@ -154,6 +156,7 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
   const value = useMemo<Playback>(
     () => ({
       status: connection?.mode ?? 'connecting',
+      ready: connection !== null,
       fallbackReason: connection?.mode === 'fake' ? connection.reason : null,
       nowPlaying: playingTrack,
       artworkUrl,
@@ -163,9 +166,9 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
       hasPrevious: hasPrevious(queue),
       hasNext: hasNext(queue),
       togglePlay,
-      previous: () => playQueue(previous(queueRef.current)),
-      next: () => playQueue(next(queueRef.current)),
-      playAt: (index) => playQueue(jumpTo(queueRef.current, index)),
+      previous: () => moveCursorAndPlay(previous(queueRef.current)),
+      next: () => moveCursorAndPlay(next(queueRef.current)),
+      playAt: (index) => moveCursorAndPlay(jumpTo(queueRef.current, index)),
       seek,
       volume,
       muted: volume === 0,
@@ -173,7 +176,7 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
       toggleMute,
       logIn,
     }),
-    [connection, queue, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, playQueue, seek, volume, setVolume, toggleMute, logIn],
+    [connection, queue, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
   )
 
   return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>

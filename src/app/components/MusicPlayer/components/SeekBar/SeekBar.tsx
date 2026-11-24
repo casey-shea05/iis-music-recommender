@@ -3,13 +3,15 @@ import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { Slider } from '@/shadcn/slider.tsx'
 import { formatTime } from '@/utils/format.ts'
 import { firstValue } from '@/utils/slider.ts'
+import type { PlayerVariant } from '../../variant.ts'
 
 /**
- * Seek slider. `edge` is the minimised bar's version: no thumb and no timestamps, but still draggable.
- * Otherwise elapsed and total time sit either side.
+ * Seek slider. In the bar it runs along the top edge: no thumb and no timestamps, but still draggable.
+ * Expanded, elapsed and total time sit either side.
  */
-export function SeekBar({ edge = false }: { edge?: boolean }) {
-  const { status, nowPlaying, positionMs, durationMs, seek } = usePlayback()
+export function SeekBar({ variant = 'bar' }: { variant?: PlayerVariant }) {
+  const { ready, nowPlaying, positionMs, durationMs, seek } = usePlayback()
+  const edge = variant === 'bar'
   // While dragging, show the thumb under the cursor instead of the ticking position.
   const [scrubMs, setScrubMs] = useState<number | null>(null)
   const shownMs = scrubMs ?? positionMs
@@ -18,7 +20,7 @@ export function SeekBar({ edge = false }: { edge?: boolean }) {
     <Slider
       value={[shownMs]}
       max={durationMs || 1}
-      disabled={status === 'connecting' || !nowPlaying}
+      disabled={!ready || !nowPlaying}
       onValueChange={(v) => setScrubMs(firstValue(v))}
       onValueCommitted={(v) => {
         seek(firstValue(v))

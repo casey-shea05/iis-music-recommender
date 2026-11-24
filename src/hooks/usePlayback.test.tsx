@@ -36,8 +36,10 @@ describe('usePlayback', () => {
   afterEach(() => vi.useRealTimers())
 
   it('connects, then has the first track Now playing but not yet playing', async () => {
-    const { result } = await connected()
-    expect(result.current.status).toBe('fake')
+    const { result } = setup()
+    expect(result.current.ready).toBe(false)
+    await waitFor(() => expect(result.current.status).toBe('fake'))
+    expect(result.current.ready).toBe(true)
     expect(result.current.nowPlaying?.title).toBe('Alpha')
     expect(result.current.playing).toBe(false)
   })

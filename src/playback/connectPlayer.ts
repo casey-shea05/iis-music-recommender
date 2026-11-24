@@ -1,7 +1,7 @@
 // Engine selection (ADR-0001 decision 3): try Spotify, otherwise fall back to the fake engine.
 // The app never forces a login: with no saved login it starts on the fake engine.
 import { FakePlayer } from './fakePlayer.ts'
-import type { Player } from './player.ts'
+import type { PlayableTrack, Player } from './player.ts'
 import { spotifyAuth, type SpotifyAuth } from './spotify/auth.ts'
 import { connectSpotifyPlayer } from './spotify/spotifyPlayer.ts'
 
@@ -13,7 +13,7 @@ export type ConnectedPlayer =
   | { mode: 'fake'; player: Player; reason: FallbackReason }
 
 export type ConnectOptions = {
-  tracks: readonly { id: string; durationMs: number }[]
+  tracks: readonly PlayableTrack[]
   /** Defaults to the login from .env; null when SPOTIFY_CLIENT_ID or SPOTIFY_REDIRECT_URI is missing. */
   auth?: Pick<SpotifyAuth, 'completeLogin' | 'getAccessToken'> | null
   connectSpotify?: (getAccessToken: () => Promise<string | null>) => Promise<Player>

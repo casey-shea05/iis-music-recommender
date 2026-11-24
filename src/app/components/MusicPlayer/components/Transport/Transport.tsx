@@ -1,11 +1,12 @@
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react'
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { Button } from '@/shadcn/button.tsx'
+import type { PlayerVariant } from '../../variant.ts'
 
 /** Previous, play/pause and next. */
-export function Transport({ large = false }: { large?: boolean }) {
-  const { status, nowPlaying, playing, hasPrevious, hasNext, togglePlay, previous, next } = usePlayback()
-  const ready = status !== 'connecting'
+export function Transport({ variant = 'bar' }: { variant?: PlayerVariant }) {
+  const { ready, nowPlaying, playing, hasPrevious, hasNext, togglePlay, previous, next } = usePlayback()
+  const large = variant === 'expanded'
   const skipSize = large ? 'icon-lg' : 'icon'
 
   return (

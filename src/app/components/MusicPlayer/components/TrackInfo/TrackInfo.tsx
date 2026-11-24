@@ -1,10 +1,12 @@
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { cn } from '@/shadcn/utils.ts'
 import { artistNames } from '@/utils/format.ts'
+import type { PlayerVariant } from '../../variant.ts'
 
 /** Title and artists of Now playing. */
-export function TrackInfo({ large = false, className }: { large?: boolean; className?: string }) {
+export function TrackInfo({ variant = 'bar', className }: { variant?: PlayerVariant; className?: string }) {
   const { nowPlaying } = usePlayback()
+  const large = variant === 'expanded'
   return (
     <div className={cn('min-w-0', className)}>
       <p className={cn('truncate font-medium', large ? 'text-xl font-semibold' : 'text-sm')}>

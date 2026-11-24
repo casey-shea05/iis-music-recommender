@@ -1,4 +1,4 @@
-import { Listeners, type Player, type ProgressEvent, type TrackStartedEvent } from './player.ts'
+import { Listeners, type PlayableTrack, type Player, type ProgressEvent, type TrackStartedEvent } from './player.ts'
 
 const TICK_MS = 250
 
@@ -12,7 +12,7 @@ export class FakePlayer implements Player {
   private started = new Listeners<TrackStartedEvent>()
   private ended = new Listeners<void>()
 
-  constructor(tracks: readonly { id: string; durationMs: number }[]) {
+  constructor(tracks: readonly PlayableTrack[]) {
     this.durations = new Map(tracks.map((t) => [t.id, t.durationMs]))
   }
 

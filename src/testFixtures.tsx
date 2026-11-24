@@ -41,5 +41,5 @@ export async function renderWithPlayback(ui: ReactNode, { tracks, connection, lo
 
 /** Test-only marker that appears once the provider has connected an engine. */
 function ReadyProbe() {
-  return usePlayback().status === 'connecting' ? null : <span data-testid="playback-ready" hidden />
+  return !usePlayback().ready ? null : <span data-testid="playback-ready" hidden />
 }

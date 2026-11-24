@@ -30,12 +30,12 @@ export function MusicPlayer() {
         <div className="mx-auto grid w-full max-w-5xl flex-1 gap-8 p-6 md:grid-cols-2">
           <div className="flex flex-col items-center justify-center gap-6">
             <Artwork className="aspect-square w-full max-w-sm rounded-xl" />
-            <TrackInfo large className="w-full max-w-sm text-center" />
+            <TrackInfo variant="expanded" className="w-full max-w-sm text-center" />
             <div className="w-full max-w-sm">
-              <SeekBar />
+              <SeekBar variant="expanded" />
             </div>
-            <Transport large />
-            <VolumeControl widthClass="w-64" />
+            <Transport variant="expanded" />
+            <VolumeControl variant="expanded" />
           </div>
           {/* Right half is left free for IIS-27: explanation, dislike and reasons, Up next, Heard, Active reasons. */}
           <div />
@@ -48,7 +48,7 @@ export function MusicPlayer() {
     <div className="fixed inset-x-0 bottom-0 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-t bg-background px-4 py-3">
       {/* Seek runs along the top edge of the bar. */}
       <div className="absolute inset-x-0 top-0 -translate-y-1/2">
-        <SeekBar edge />
+        <SeekBar variant="bar" />
       </div>
       <div className="flex min-w-0 items-center gap-3">
         <Artwork className="size-14" />

@@ -1,6 +1,9 @@
 // The player boundary. No Spotify types leak out of here (IIS-56).
 // The queue decides which track plays; the player only plays what it is told.
 
+/** What an engine needs to know about a track: which one, and how long it runs. */
+export type PlayableTrack = { id: string; durationMs: number }
+
 export type ProgressEvent = { positionMs: number; durationMs: number }
 
 export type TrackStartedEvent = { trackId: string; artworkUrl: string | null }

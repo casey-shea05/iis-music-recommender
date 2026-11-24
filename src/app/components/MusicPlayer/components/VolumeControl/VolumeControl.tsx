@@ -4,9 +4,11 @@ import { Button } from '@/shadcn/button.tsx'
 import { Slider } from '@/shadcn/slider.tsx'
 import { cn } from '@/shadcn/utils.ts'
 import { firstValue } from '@/utils/slider.ts'
+import type { PlayerVariant } from '../../variant.ts'
 
 /** Mute button and volume slider. Mute memory lives in the provider, so it survives switching views. */
-export function VolumeControl({ widthClass = 'w-28', className }: { widthClass?: string; className?: string }) {
+export function VolumeControl({ variant = 'bar', className }: { variant?: PlayerVariant; className?: string }) {
+  const widthClass = variant === 'expanded' ? 'w-64' : 'w-28'
   const { volume, muted, setVolume, toggleMute } = usePlayback()
   const Icon = muted ? VolumeX : volume < 0.5 ? Volume1 : Volume2
 
