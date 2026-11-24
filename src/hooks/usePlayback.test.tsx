@@ -146,4 +146,14 @@ describe('usePlayback', () => {
     act(() => result.current.seek(1500))
     expect(result.current.positionMs).toBe(1500)
   })
+
+  // Spotify reports the new position a moment after a seek; until then the seek bar flashed back to the old one.
+  it('shows the seeked-to position before an engine that reports it late', async () => {
+    const player = new FakePlayer(tracks)
+    vi.spyOn(player, 'seek').mockImplementation(() => {})
+    const { result } = await connected({ player })
+    act(() => result.current.togglePlay())
+    act(() => result.current.seek(1500))
+    expect(result.current.positionMs).toBe(1500)
+  })
 })

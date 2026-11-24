@@ -142,7 +142,14 @@ export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, chil
     }
   }, [playingTrack, loaded, playing])
 
-  const seek = useCallback((ms: number) => playerRef.current?.seek(ms), [])
+  // Show the target straight away: Spotify reports the new position a moment later, and until then
+  // the seek bar would flash back to the old one.
+  const seek = useCallback((ms: number) => {
+    const player = playerRef.current
+    if (!player) return
+    setPositionMs(Math.max(0, ms))
+    player.seek(ms)
+  }, [])
 
   const value = useMemo<Playback>(
     () => ({
