@@ -1,10 +1,13 @@
 /// <reference types="vitest/config" />
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
   // Everything with these prefixes is copied into the browser bundle, so never put a secret
   // (e.g. SPOTIFY_CLIENT_SECRET) in .env. PKCE needs no secret.
   envPrefix: ['VITE_', 'SPOTIFY_'],
