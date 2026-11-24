@@ -89,7 +89,7 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R23 | Follow-up chips for mood and genre | Missing | Won't (yet) | Plan |
 | R24 | A disliked track can be set back to neutral | S3 | Won't (yet) | Plan |
 
-R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, playback and stack decisions are in [ADR 0001](../docs/adr/0001-technical-spike.md): the taste profile comes from Spotify top tracks and artists, features and candidate tracks come from ReccoBeats, and a committed sample catalogue is the simulated fallback.
+R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, playback and stack decisions are in [ADR 0001](../docs/adr/0001-technical-spike.md): the taste profile comes from Spotify top tracks and artists, features and candidate tracks come from ReccoBeats.
 
 ### Known limitations
 

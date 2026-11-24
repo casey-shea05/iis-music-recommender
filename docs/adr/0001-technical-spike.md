@@ -24,10 +24,10 @@ ReccoBeats (`api.reccobeats.com`) needs no key, allows browser calls, and return
 `scripts/fetch-catalogue.ts` runs once:
 1. Get Spotify `/me/top/tracks` and `/me/top/artists`.
 2. Ask ReccoBeats for recommendations seeded from them.
-3. Get ReccoBeats features for every track.
+3. Get ReccoBeats features for every track. Top tracks ReccoBeats doesn't know by Spotify ID (Spotify can give one recording several IDs) are looked up by ISRC, then by title search with a title and artist match; those it still can't find are skipped (10 of 50 on the developer's account).
 4. Write `data/catalogue.json` (about 300–2,000 tracks, under 1 MB).
 
-The app reads the file rather than calling the APIs live, so the demo and tests don't depend on third-party uptime or rate limits. `data/catalogue.json` is gitignored because it holds personal data. A small `data/sample-catalogue.json` is committed so a reviewer can run the app without Spotify; it counts as **simulated** in the write-up.
+The app reads the file rather than calling the APIs live, so the demo and tests don't depend on third-party uptime or rate limits. `data/catalogue.json` is gitignored because it holds personal data. No sample catalogue is committed: running the app needs a Spotify login with Premium, which the setup guide covers, and the prototype is also shown in a recorded demo video.
 
 ### 2. Taste profile: Spotify top tracks and artists
 
@@ -35,7 +35,7 @@ The profile is the average features of the user's top tracks plus the list of to
 
 ### 3. Playback: Spotify Web Playback SDK, then Spotify Connect, then a fake player
 
-The Web Playback SDK plays full tracks in the browser tab with Premium, and the Spotify app doesn't need to be open. It's time-boxed to 30 minutes, because a forum report says `connect()` hangs in Development Mode since Feb 2026. If it does, the app controls the Spotify desktop app through the Connect player endpoints instead. The sample catalogue uses a fake timer player. Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted.
+The Web Playback SDK plays full tracks in the browser tab with Premium, and the Spotify app doesn't need to be open. It's time-boxed to 30 minutes, because a forum report says `connect()` hangs in Development Mode since Feb 2026. If it does, the app controls the Spotify desktop app through the Connect player endpoints instead. Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted.
 
 ### 4. Stack: Vite + React + TypeScript, no server yet
 
