@@ -86,3 +86,87 @@ describe('connectSpotifyPlayer', () => {
     expect(started).not.toHaveBeenCalled()
   })
 })
+
+describe('when a track counts as ended', () => {
+  const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
+    async () => new Response(null, { status: 204 }),
+  )
+  const DURATION = 200_000
+
+  beforeEach(() => {
+    vi.resetModules()
+    vi.stubGlobal('fetch', fetchMock)
+    fetchMock.mockClear()
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    delete window.Spotify
+  })
+
+  async function setUp() {
+    const sdk = fakeSdk()
+    const { connectSpotifyPlayer } = await import('./spotifyPlayer.ts')
+    const player = await connectSpotifyPlayer(async () => 'token')
+    const ended = vi.fn()
+    player.onEnded(ended)
+    /** Spotify reporting what this tab's device is doing. */
+    const report = (trackId: string, { paused = false, position = 0 } = {}) =>
+      sdk.players[0].listeners.get('player_state_changed')?.forEach((cb) =>
+        cb({
+          paused,
+          position,
+          duration: DURATION,
+          track_window: { current_track: { id: trackId, uri: `spotify:track:${trackId}`, album: { images: [] } } },
+        }),
+      )
+    const requestedTracks = () => fetchMock.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).uris[0])
+    return { player, ended, report, requestedTracks }
+  }
+
+  it('ends when Spotify moves on to a track of its own choosing', async () => {
+    const { player, ended, report } = await setUp()
+    player.play('a')
+    report('a')
+    report('autoplay-pick')
+    expect(ended).toHaveBeenCalledTimes(1)
+    player.disconnect()
+  })
+
+  // Seen in the browser: after Next, Previous quickly, Spotify played the older request ~300 ms after the newer one.
+  it('treats a track it was asked for moments ago as a late request: no end, and asks for the right track again', async () => {
+    const { player, ended, report, requestedTracks } = await setUp()
+    player.play('a')
+    report('a')
+    player.play('b')
+    report('b')
+    await vi.waitFor(() => expect(requestedTracks()).toHaveLength(2))
+
+    report('a')
+
+    expect(ended).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(requestedTracks()).toEqual(['spotify:track:a', 'spotify:track:b', 'spotify:track:b']))
+    player.disconnect()
+  })
+
+  it('ends when the track plays to its end (Spotify reports paused at 0)', async () => {
+    const { player, ended, report } = await setUp()
+    player.play('a')
+    report('a', { position: DURATION - 1000 })
+    report('a', { paused: true, position: 0 })
+    expect(ended).toHaveBeenCalledTimes(1)
+    player.disconnect()
+  })
+
+  it('does not end when a paused track is seeked from near its end back to the start', async () => {
+    const { player, ended, report } = await setUp()
+    player.play('a')
+    report('a')
+    report('a', { paused: true, position: 30_000 })
+    player.seek(DURATION - 1000)
+    report('a', { paused: true, position: DURATION - 1000 })
+    player.seek(0)
+    report('a', { paused: true, position: 0 })
+    expect(ended).not.toHaveBeenCalled()
+    player.disconnect()
+  })
+})

@@ -8,6 +8,9 @@ const API = 'https://api.spotify.com/v1'
 const POLL_MS = 500
 // A track that pauses at 0 having last been seen this close to its end has finished.
 const END_WINDOW_MS = 3000
+// Spotify can carry out an earlier play request after a newer one (seen ~300 ms late when skipping quickly).
+// A track asked for this recently is such a late request, not Spotify moving on by itself.
+const LATE_REQUEST_MS = 5000
 
 type Device = { sdk: SdkPlayer; deviceId: string }
 
@@ -64,6 +67,10 @@ class SpotifyPlayer implements Player {
   /** When lastPositionMs was seen, and whether the track was moving then. */
   private lastSeenAt = 0
   private lastSeenPlaying = false
+  /** Tracks asked for before `requested`, and when they stopped being the one wanted. */
+  private replaced = new Map<string, number>()
+  /** Set once the right track has been asked for again after a late request, so a burst of states asks only once. */
+  private correcting = false
 
   private sdk: SdkPlayer
   private deviceId: string
@@ -83,6 +90,9 @@ class SpotifyPlayer implements Player {
   play(trackId: string) {
     // play() and resume() run inside the click handler, so the browser allows audio from here on.
     void this.sdk.activateElement()
+    if (this.requested && this.requested !== trackId) this.replaced.set(this.requested, Date.now())
+    this.replaced.delete(trackId)
+    this.correcting = false
     this.requested = trackId
     this.startedFor = null
     this.endedFor = null
@@ -101,7 +111,11 @@ class SpotifyPlayer implements Player {
   }
 
   seek(positionMs: number) {
-    void this.sdk.seek(Math.max(0, positionMs))
+    const target = Math.max(0, positionMs)
+    // Remember where we sent it, so a seek back to 0 isn't mistaken for the track finishing.
+    this.lastPositionMs = target
+    this.lastSeenAt = Date.now()
+    void this.sdk.seek(target)
   }
 
   setVolume(volume: number) {
@@ -156,6 +170,15 @@ class SpotifyPlayer implements Player {
     }
     if (this.startedFor !== requested) return
 
+    if (isRequested) this.correcting = false
+    else if (current !== null && this.isLateRequest(current)) {
+      if (!this.correcting) {
+        this.correcting = true
+        void this.startOnDevice(requested)
+      }
+      return
+    }
+
     // Background tabs slow timers down, so estimate where the track got to rather than trusting the last poll.
     const reachedMs = this.lastPositionMs + (this.lastSeenPlaying ? Date.now() - this.lastSeenAt : 0)
     const finishedHere =
@@ -176,6 +199,14 @@ class SpotifyPlayer implements Player {
     this.progress.emit({ positionMs: state.position, durationMs: state.duration })
     if (state.paused) this.stopPolling()
     else this.startPolling()
+  }
+
+  private isLateRequest(track: SdkTrack) {
+    const now = Date.now()
+    return [track.id, track.linked_from?.id].some((id) => {
+      const replacedAt = id ? this.replaced.get(id) : undefined
+      return replacedAt !== undefined && now - replacedAt < LATE_REQUEST_MS
+    })
   }
 
   private startPolling() {
