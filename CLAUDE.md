@@ -2,6 +2,16 @@
 
 A university Interactive Intelligent Systems project: a music recommender where users answer a track's explanation with their own reason for rejecting it, and that reason shapes later recommendations.
 
+## Repo structure
+
+Before adding or moving a file in `src/`, or importing across its folders, read "Layout" in `docs/adr/0001-technical-spike.md`. It says where components, hooks and logic go, and which folders may use Spotify or React.
+
+Outside `src/`:
+
+- `refinement/PRD.md`: the design brief, covering requirements, known limitations and the rationale table.
+- `discovery/`: the literature review and its research logs. `discovery/research-papers/` is gitignored.
+- `scripts/`: the catalogue script (`npm run catalogue`). It writes `data/catalogue.json`, which is gitignored personal data: only `src/main.tsx` imports it, and tests use `makeTrack` from `src/testFixtures.tsx`.
+
 ## UI verification
 
 To view and interact with the running app, use the Claude in Chrome tools (`mcp__claude-in-chrome__*`, deferred: load them with one `ToolSearch` call). The user's browser is Dia.
