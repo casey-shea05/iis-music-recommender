@@ -56,6 +56,17 @@ describe('connectPlayer', () => {
     expect(await connecting).toMatchObject({ mode: 'fake', reason: 'unavailable' })
   })
 
+  it.each([
+    ['finishing the login after the redirect', { completeLogin: () => new Promise<boolean>(() => {}), getAccessToken: async () => 'token' }],
+    ['refreshing the token on reload', { completeLogin: async () => false, getAccessToken: () => new Promise<string | null>(() => {}) }],
+  ])('falls back to the fake engine when %s hangs', async (_step, auth) => {
+    vi.useFakeTimers()
+    let result: unknown
+    void connectPlayer({ tracks, auth, connectSpotify: vi.fn(), timeoutMs: 5000 }).then((r) => (result = r))
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(result).toMatchObject({ mode: 'fake', reason: 'unavailable' })
+  })
+
   it('disconnects a Spotify engine that connects after the time-box ran out', async () => {
     vi.useFakeTimers()
     const late = new FakePlayer(tracks)

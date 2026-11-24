@@ -35,10 +35,13 @@ export async function connectPlayer({
   const fake = (reason: FallbackReason): ConnectedPlayer => ({ mode: 'fake', player: new FakePlayer(tracks), reason })
 
   if (!auth) return fake('not-configured')
-  await auth.completeLogin()
-  if (!(await auth.getAccessToken())) return fake('logged-out')
 
-  const attempt = connectSpotify(() => auth.getAccessToken())
+  // The time-box covers the token requests too: a stalled login or refresh would otherwise leave the app connecting.
+  const attempt = (async () => {
+    await auth.completeLogin()
+    if (!(await auth.getAccessToken())) return 'logged-out' as const
+    return connectSpotify(() => auth.getAccessToken())
+  })()
   let timer: ReturnType<typeof setTimeout> | undefined
   const timedOut = new Promise<'timeout'>((resolve) => {
     timer = setTimeout(() => resolve('timeout'), timeoutMs)
@@ -48,9 +51,10 @@ export async function connectPlayer({
     const winner = await Promise.race([attempt, timedOut])
     if (winner === 'timeout') {
       // If the SDK connects later, release it so it doesn't play alongside the fake engine.
-      attempt.then((late) => late.disconnect(), () => {})
+      attempt.then((late) => late !== 'logged-out' && late.disconnect(), () => {})
       return fake('unavailable')
     }
+    if (winner === 'logged-out') return fake('logged-out')
     return { mode: 'spotify', player: winner }
   } catch (error) {
     console.warn('Spotify playback unavailable, using the fake engine.', error)
