@@ -58,7 +58,7 @@ Layout (amended 2026-11-24, IIS-56):
 - `src/shadcn/`: vendored shadcn/ui building blocks and their `cn()` helper, kept flat as the CLI generates them (`components.json` points here).
 - `src/hooks/`: hooks shared across components, such as `PlaybackProvider` and `usePlayback()`. A hook used by one component sits in that component's folder.
 - `src/recommender/`: pure TypeScript logic (catalogue, queue, and later reasons and scoring), no React and no Spotify.
-- `src/playback/`: the `Player` interface, the fake engine and engine selection. `src/playback/spotify/` holds all Spotify code (PKCE, browser auth, the SDK engine), and nothing outside it imports Spotify.
+- `src/playback/`: the `Player` interface, the fake engine and engine selection. `src/playback/spotify/` holds all Spotify code (PKCE, browser auth, the SDK engine). Only engine selection in `src/playback/` and the catalogue script in `scripts/` import from it; the rest of the app sees the `Player` interface.
 - `src/utils/`: small shared helpers such as formatting.
 
 File names: components are PascalCase, other modules are camelCase, and generated shadcn files keep their lowercase names.
