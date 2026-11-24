@@ -35,14 +35,14 @@ The profile is the average features of the user's top tracks plus the list of to
 
 ### 3. Playback: Spotify Web Playback SDK, with a fake player as the fallback
 
-The player sits behind a small `Player` interface (play a track, pause, resume, progress and track-ended events) with two engines:
+The player sits behind a small `Player` interface (play a track, pause, resume, seek, set volume, and progress, track-started and track-ended events) with two engines:
 
 - **Spotify engine:** the Web Playback SDK plays full tracks in the browser tab with Premium, and the Spotify app doesn't need to be open. It's time-boxed to 30 minutes, because a forum report says `connect()` hangs in Development Mode since Feb 2026.
 - **Fake engine:** the same controls and events, driven by a timer over the track's duration, with no audio. It is the Vitest test double and the fallback: if `connect()` hangs, the app shows a "Playback unavailable" banner and uses it, so the rest of the app stays usable.
 
 Spotify Connect (controlling the desktop app) was considered as a middle fallback and not built. The desktop app would have to be open, and track endings would have to be found by polling, so it was flakier to demo for little gain.
 
-Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted. The browser handles its own login callback on that URI and keeps tokens in `localStorage` with silent refresh. The catalogue script and the dev server share the URI, so they can't run at the same time.
+Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted. The browser handles its own login callback on that URI and keeps tokens in `localStorage` with silent refresh. Without saved tokens, or when a refresh fails, the app starts on the fake engine, and the banner offers a Log in with Spotify button. The app never forces a login on load. The catalogue script and the dev server share the URI, so they can't run at the same time.
 
 ### 4. Stack: Vite + React + TypeScript, no server yet
 
@@ -52,7 +52,16 @@ Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not 
 - Tests use Vitest.
 - A small Node (Hono) server is added only when free text needs to keep an Anthropic key out of the browser.
 
-Layout: `src/domain/` (pure TypeScript recommender logic, no React and no Spotify), `src/spotify/`, `src/state/`, `src/ui/`.
+Layout (amended 2026-11-24, IIS-56):
+
+- `src/app/`: the single page. Every component gets its own `Name/Name.tsx` folder, and a component's children sit in its own `components/` subfolder. A component lives in the `components/` folder of the closest parent that uses it.
+- `src/shadcn/`: vendored shadcn/ui building blocks and their `cn()` helper, kept flat as the CLI generates them (`components.json` points here).
+- `src/hooks/`: hooks shared across components, such as `PlaybackProvider` and `usePlayback()`. A hook used by one component sits in that component's folder.
+- `src/recommender/`: pure TypeScript logic (catalogue, queue, and later reasons and scoring), no React and no Spotify.
+- `src/playback/`: the `Player` interface, the fake engine and engine selection. `src/playback/spotify/` holds all Spotify code (PKCE, browser auth, the SDK engine), and nothing outside it imports Spotify.
+- `src/utils/`: small shared helpers such as formatting.
+
+File names: components are PascalCase, other modules are camelCase, and generated shadcn files keep their lowercase names.
 
 ### 5. Free text: accepted but not acted on for now
 
