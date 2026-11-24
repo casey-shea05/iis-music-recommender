@@ -24,7 +24,7 @@ export type ConnectOptions = {
 const DEFAULT_TIMEOUT_MS = 10_000
 
 /** Sends the browser to Spotify's login page, or null when Spotify isn't configured in .env. */
-export const logInToSpotify: (() => void) | null = spotifyAuth && (() => void spotifyAuth!.startLogin())
+export const startLogIn: (() => void) | null = spotifyAuth && (() => void spotifyAuth!.startLogin())
 
 export async function connectPlayer({
   tracks,

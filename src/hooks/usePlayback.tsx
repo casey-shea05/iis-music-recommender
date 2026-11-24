@@ -2,7 +2,7 @@
 // position, volume and mute memory; any component reads and drives it through usePlayback().
 // Components never learn which engine is running beyond `status`.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { connectPlayer, logInToSpotify, type ConnectedPlayer, type FallbackReason } from '@/playback/connectPlayer.ts'
+import { connectPlayer, startLogIn, type ConnectedPlayer, type FallbackReason } from '@/playback/connectPlayer.ts'
 import type { Player } from '@/playback/player.ts'
 import type { CatalogueTrack } from '@/recommender/catalogue.ts'
 import { createQueue, hasNext, hasPrevious, jumpTo, next, nowPlaying, previous, type Queue } from '@/recommender/queue.ts'
@@ -48,7 +48,7 @@ type ProviderProps = {
   children: ReactNode
 }
 
-export function PlaybackProvider({ tracks, connect, logIn = logInToSpotify, children }: ProviderProps) {
+export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children }: ProviderProps) {
   const [connection, setConnection] = useState<ConnectedPlayer | null>(null)
   const playerRef = useRef<Player | null>(null)
   const [queue, setQueue] = useState<Queue<CatalogueTrack>>(() => createQueue(tracks))
