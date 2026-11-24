@@ -97,8 +97,8 @@ export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children
   useEffect(() => {
     let cancelled = false
     let player: Player | null = null
-    const connecting = connect ?? (() => connectPlayer({ tracks }))
-    void connecting().then((result) => {
+    const connectEngine = connect ?? (() => connectPlayer({ tracks }))
+    void connectEngine().then((result) => {
       player = result.player
       if (cancelled) return player.disconnect()
       playerRef.current = player

@@ -2,7 +2,7 @@
 // The app never forces a login: with no saved login it starts on the fake engine.
 import { FakePlayer } from './fakePlayer.ts'
 import type { PlayableTrack, Player } from './player.ts'
-import { spotifyAuth, type SpotifyAuth } from './spotify/auth.ts'
+import { spotifyAuth, type GetAccessToken, type SpotifyAuth } from './spotify/auth.ts'
 import { connectSpotifyPlayer } from './spotify/spotifyPlayer.ts'
 
 /** Why the fake engine is running. The banner words its message from this. */
@@ -16,7 +16,7 @@ export type ConnectOptions = {
   tracks: readonly PlayableTrack[]
   /** Defaults to the login from .env; null when SPOTIFY_CLIENT_ID or SPOTIFY_REDIRECT_URI is missing. */
   auth?: Pick<SpotifyAuth, 'completeLogin' | 'getAccessToken'> | null
-  connectSpotify?: (getAccessToken: () => Promise<string | null>) => Promise<Player>
+  connectSpotify?: (getAccessToken: GetAccessToken) => Promise<Player>
   /** How long to wait for the SDK before giving up (a forum report says connect() can hang in Development Mode). */
   timeoutMs?: number
 }

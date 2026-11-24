@@ -1,6 +1,7 @@
 // The Spotify engine: full tracks in this browser tab through the Web Playback SDK (Premium needed).
 // Only this folder knows about Spotify; the rest of the app sees the Player interface.
 import { Listeners, type Player, type ProgressEvent, type TrackStartedEvent } from '../player.ts'
+import type { GetAccessToken } from './auth.ts'
 import { loadSdk, type SdkPlayer, type SdkState, type SdkTrack } from './sdk.ts'
 
 const API = 'https://api.spotify.com/v1'
@@ -22,7 +23,7 @@ let device: Promise<Device> | null = null
  * Connects this tab as a Spotify device (once per page) and resolves with a Player once it is ready.
  * Rejects on SDK errors. Disconnecting the returned Player releases it but keeps the shared device.
  */
-export async function connectSpotifyPlayer(getAccessToken: () => Promise<string | null>): Promise<Player> {
+export async function connectSpotifyPlayer(getAccessToken: GetAccessToken): Promise<Player> {
   device ??= openDevice(getAccessToken).catch((error) => {
     device = null
     throw error
@@ -31,7 +32,7 @@ export async function connectSpotifyPlayer(getAccessToken: () => Promise<string 
   return new SpotifyPlayer(sdk, deviceId, getAccessToken)
 }
 
-async function openDevice(getAccessToken: () => Promise<string | null>): Promise<Device> {
+async function openDevice(getAccessToken: GetAccessToken): Promise<Device> {
   const Spotify = await loadSdk()
   const sdk = new Spotify.Player({
     name: 'IIS Music Recommender',
@@ -74,12 +75,12 @@ class SpotifyPlayer implements Player {
 
   private sdk: SdkPlayer
   private deviceId: string
-  private getAccessToken: () => Promise<string | null>
+  private getAccessToken: GetAccessToken
 
   private onState = (state: SdkState | null) => this.handleState(state)
   private onPlaybackError = ({ message }: { message: string }) => console.warn('Spotify playback error:', message)
 
-  constructor(sdk: SdkPlayer, deviceId: string, getAccessToken: () => Promise<string | null>) {
+  constructor(sdk: SdkPlayer, deviceId: string, getAccessToken: GetAccessToken) {
     this.sdk = sdk
     this.deviceId = deviceId
     this.getAccessToken = getAccessToken

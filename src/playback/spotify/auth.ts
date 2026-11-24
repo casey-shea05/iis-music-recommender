@@ -23,6 +23,9 @@ export type SpotifyAuthConfig = {
   navigate?: (url: string) => void
 }
 
+/** A valid access token, or null when nobody is logged in. */
+export type GetAccessToken = () => Promise<string | null>
+
 export type SpotifyAuth = {
   /** Sends the browser to Spotify's login page. */
   startLogin(): Promise<void>
