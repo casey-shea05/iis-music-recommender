@@ -5,7 +5,7 @@ import App from './App.tsx'
 
 test('smoke: App renders its heading, the player and the banner', async () => {
   await renderWithPlayback(<App />, { tracks: [makeTrack({ id: 'a', title: 'Alpha' })] })
-  expect(screen.getByRole('heading', { name: /iis music recommender/i })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: /^music recommender$/i })).toBeInTheDocument()
   expect(screen.getByText('Alpha')).toBeInTheDocument()
   expect(screen.getByRole('status')).toBeInTheDocument()
 })

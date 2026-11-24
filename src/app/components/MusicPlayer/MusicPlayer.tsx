@@ -3,11 +3,32 @@
 import { ChevronDown, Maximize2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/shadcn/button.tsx'
+import { UpNextList } from './components/UpNextList/UpNextList.tsx'
+import type { CatalogueTrack } from '@/recommender/catalogue.ts'
 import { Artwork } from './components/Artwork/Artwork.tsx'
 import { SeekBar } from './components/SeekBar/SeekBar.tsx'
 import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
 import { Transport } from './components/Transport/Transport.tsx'
 import { VolumeControl } from './components/VolumeControl/VolumeControl.tsx'
+
+// TODO(IIS-61): mock data for the UI mock-up; replace with the queue from playback.
+const mock = (n: number, title: string, artist: string): CatalogueTrack => ({
+  id: `mock-${n}`,
+  title,
+  artists: [{ id: `a${n}`, name: artist }],
+  durationMs: 150_000 + n * 17_000,
+  features: { tempo: 120, energy: 0.5, valence: 0.5, acousticness: 0.5 },
+  anchorArtistId: `a${n}`,
+  isTopTrack: false,
+})
+const MOCK_UP_NEXT = [
+  mock(1, 'Midnight City', 'M83'),
+  mock(2, 'Genesis', 'Grimes'),
+  mock(3, 'Re: Stacks', 'Bon Iver'),
+  mock(4, 'Are You Gonna Be My Girl', 'Jet'),
+  mock(5, 'Dreams', 'Fleetwood Mac'),
+  mock(6, 'Hidden sixth track', 'Not Shown'),
+]
 
 export function MusicPlayer() {
   const [expanded, setExpanded] = useState(false)
@@ -37,8 +58,10 @@ export function MusicPlayer() {
             <Transport variant="expanded" />
             <VolumeControl variant="expanded" />
           </div>
-          {/* Right half is left free for IIS-27: explanation, dislike and reasons, Up next, Heard, Active reasons. */}
-          <div />
+          {/* Right half: IIS-27 still to add explanation, dislike and reasons, Active reasons (Heard now lives on the main page). */}
+          <div className="flex flex-col gap-6">
+            <UpNextList tracks={MOCK_UP_NEXT} onSelect={() => {}} />
+          </div>
         </div>
       </div>
     )
