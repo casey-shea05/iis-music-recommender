@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'data', 'src/components/ui']),
+  globalIgnores(['dist', 'data', 'src/shadcn']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -16,5 +16,10 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    // Test files are never hot-reloaded, so they can export helpers next to components.
+    files: ['**/*.test.tsx', 'src/testFixtures.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

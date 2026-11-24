@@ -4,8 +4,9 @@
 import { execFile } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
-import type { ArtistRef, Features } from '../src/domain/catalogue.ts'
-import { buildAuthorizeUrl, codeChallengeFor, generateCodeVerifier } from '../src/spotify/pkce.ts'
+import type { ArtistRef, Features } from '../src/recommender/catalogue.ts'
+import { buildAuthorizeUrl, codeChallengeFor, generateCodeVerifier } from '../src/playback/spotify/pkce.ts'
+import { SPOTIFY_SCOPES } from '../src/playback/spotify/scopes.ts'
 import {
   buildCatalogue,
   matchReccoTrack,
@@ -15,15 +16,6 @@ import {
   type SpotifyTrack,
 } from './catalogue.ts'
 
-// Scopes cover this script and the later Web Playback SDK, so one login flow serves both.
-const SCOPES = [
-  'user-top-read',
-  'streaming',
-  'user-read-email',
-  'user-read-private',
-  'user-read-playback-state',
-  'user-modify-playback-state',
-]
 const RECCOBEATS = 'https://api.reccobeats.com/v1'
 const RECS_PER_SEED = 20
 const FEATURE_BATCH = 40
@@ -66,7 +58,7 @@ async function login(): Promise<string> {
   const url = buildAuthorizeUrl({
     clientId: clientId!,
     redirectUri: REDIRECT_URI!,
-    scopes: SCOPES,
+    scopes: SPOTIFY_SCOPES,
     codeChallenge: await codeChallengeFor(verifier),
     state,
   })

@@ -1,0 +1,66 @@
+// The player: a persistent bottom bar that expands to a full-screen Now playing view.
+// Both views read the same playback state, so nothing is lost when switching between them.
+import { ChevronDown, Maximize2 } from 'lucide-react'
+import { useState } from 'react'
+import { Button } from '@/shadcn/button.tsx'
+import { Artwork } from './components/Artwork/Artwork.tsx'
+import { SeekBar } from './components/SeekBar/SeekBar.tsx'
+import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
+import { Transport } from './components/Transport/Transport.tsx'
+import { VolumeControl } from './components/VolumeControl/VolumeControl.tsx'
+
+export function MusicPlayer() {
+  const [expanded, setExpanded] = useState(false)
+
+  if (expanded) {
+    return (
+      <div
+        role="dialog"
+        aria-modal
+        aria-label="Now playing"
+        className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-background animate-in slide-in-from-bottom duration-300"
+      >
+        <div className="flex items-center justify-between p-4">
+          <Button variant="ghost" size="icon" aria-label="Collapse player" onClick={() => setExpanded(false)}>
+            <ChevronDown />
+          </Button>
+          <span className="text-sm text-muted-foreground">Now playing</span>
+          <div className="size-9" />
+        </div>
+        <div className="mx-auto grid w-full max-w-5xl flex-1 gap-8 p-6 md:grid-cols-2">
+          <div className="flex flex-col items-center justify-center gap-6">
+            <Artwork className="aspect-square w-full max-w-sm rounded-xl" />
+            <TrackInfo large className="w-full max-w-sm text-center" />
+            <div className="w-full max-w-sm">
+              <SeekBar />
+            </div>
+            <Transport large />
+            <VolumeControl widthClass="w-64" />
+          </div>
+          {/* Right half is left free for IIS-27: explanation, dislike and reasons, Up next, Heard, Active reasons. */}
+          <div />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-t bg-background px-4 py-3">
+      {/* Seek runs along the top edge of the bar. */}
+      <div className="absolute inset-x-0 top-0 -translate-y-1/2">
+        <SeekBar edge />
+      </div>
+      <div className="flex min-w-0 items-center gap-3">
+        <Artwork className="size-14" />
+        <TrackInfo />
+      </div>
+      <Transport />
+      <div className="flex items-center justify-end gap-1">
+        <VolumeControl />
+        <Button variant="ghost" size="icon" aria-label="Expand player" onClick={() => setExpanded(true)}>
+          <Maximize2 />
+        </Button>
+      </div>
+    </div>
+  )
+}

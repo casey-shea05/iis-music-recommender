@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import type { Features } from '../src/domain/catalogue.ts'
+import type { Features } from '../src/recommender/catalogue.ts'
 import {
   buildCatalogue,
   matchReccoTrack,

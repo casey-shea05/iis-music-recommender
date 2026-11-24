@@ -1,10 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import catalogue from '../data/catalogue.json'
+import App from './app/App.tsx'
+import { PlaybackProvider } from './hooks/usePlayback.tsx'
 import './index.css'
-import App from './App.tsx'
+import type { Catalogue } from './recommender/catalogue.ts'
+
+// For now the queue holds every catalogue track in file order (IIS-27 adds the recommender).
+const { tracks } = catalogue as Catalogue
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <PlaybackProvider tracks={tracks}>
+      <App />
+    </PlaybackProvider>
   </StrictMode>,
 )
