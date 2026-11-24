@@ -33,9 +33,16 @@ The app reads the file rather than calling the APIs live, so the demo and tests 
 
 The profile is the average features of the user's top tracks plus the list of top artists, from Spotify (medium-term range). This replaces the stats.fm export TODO in the PRD: stats.fm uses the same Spotify data, and an export would take days to arrive.
 
-### 3. Playback: Spotify Web Playback SDK, then Spotify Connect, then a fake player
+### 3. Playback: Spotify Web Playback SDK, with a fake player as the fallback
 
-The Web Playback SDK plays full tracks in the browser tab with Premium, and the Spotify app doesn't need to be open. It's time-boxed to 30 minutes, because a forum report says `connect()` hangs in Development Mode since Feb 2026. If it does, the app controls the Spotify desktop app through the Connect player endpoints instead. Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted.
+The player sits behind a small `Player` interface (play a track, pause, resume, progress and track-ended events) with two engines:
+
+- **Spotify engine:** the Web Playback SDK plays full tracks in the browser tab with Premium, and the Spotify app doesn't need to be open. It's time-boxed to 30 minutes, because a forum report says `connect()` hangs in Development Mode since Feb 2026.
+- **Fake engine:** the same controls and events, driven by a timer over the track's duration, with no audio. It is the Vitest test double and the fallback: if `connect()` hangs, the app shows a "Playback unavailable" banner and uses it, so the rest of the app stays usable.
+
+Spotify Connect (controlling the desktop app) was considered as a middle fallback and not built. The desktop app would have to be open, and track endings would have to be found by polling, so it was flakier to demo for little gain.
+
+Spotify needs the redirect URI on `http://127.0.0.1:<port>`; `localhost` is not accepted. The browser handles its own login callback on that URI and keeps tokens in `localStorage` with silent refresh. The catalogue script and the dev server share the URI, so they can't run at the same time.
 
 ### 4. Stack: Vite + React + TypeScript, no server yet
 

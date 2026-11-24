@@ -64,7 +64,7 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 
 | ID | Requirement | Traces to | Priority | Approach |
 | --- | --- | --- | --- | --- |
-| R1 | A discovery queue built from listening history, with three parts: Now playing, Up next (3–5 tracks) and Heard | Situation | Must | Implement |
+| R1 | A discovery queue built from listening history, with three parts: Now playing, Up next (3–5 tracks) and Heard. It is one ordered list with a cursor: clicking a Heard track plays it again, and everything after it stays in Up next; fresh tracks are added when Up next runs short | Situation | Must | Implement |
 | R2 | The track playing always shows a short explanation: one artist anchor plus one or two features | Missing, S1 | Must | Implement |
 | R3 | A skip is neutral: no prompt, and the system learns nothing from it | Wrong | Must | Implement |
 | R4 | A dislike stops the track, removes it and opens a reason prompt | Wrong, S1 | Must | Implement |
