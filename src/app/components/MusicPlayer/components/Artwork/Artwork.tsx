@@ -1,6 +1,7 @@
 import { Music } from 'lucide-react'
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { cn } from '@/shadcn/utils.ts'
+import { TrackThumbnail } from '../../../TrackThumbnail/TrackThumbnail.tsx'
 
 /** Now playing's artwork from the engine, or a placeholder coloured from the track id. */
 export function Artwork({ className }: { className?: string }) {
@@ -16,17 +17,10 @@ export function Artwork({ className }: { className?: string }) {
     )
   }
 
-  const hue = nowPlaying ? [...nowPlaying.id].reduce((sum, c) => sum + c.charCodeAt(0), 0) % 360 : 0
+  if (nowPlaying) return <TrackThumbnail track={nowPlaying} className={className} iconClassName="size-1/3" />
+
   return (
-    <div
-      aria-hidden
-      className={cn('flex shrink-0 items-center justify-center rounded-md text-white/80', className)}
-      style={{
-        background: nowPlaying
-          ? `linear-gradient(135deg, hsl(${hue} 55% 45%), hsl(${(hue + 50) % 360} 55% 30%))`
-          : 'var(--muted)',
-      }}
-    >
+    <div aria-hidden className={cn('flex shrink-0 items-center justify-center rounded-md text-white/80', className)} style={{ background: 'var(--muted)' }}>
       <Music className="size-1/3" />
     </div>
   )
