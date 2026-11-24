@@ -1,5 +1,5 @@
 // Pure steps of the catalogue build: no network, no file system.
-import type { ArtistRef, Catalogue, CatalogueTrack, Features } from '../src/domain/catalogue.ts'
+import type { ArtistRef, Catalogue, CatalogueTrack, Features } from '../src/recommender/catalogue.ts'
 
 export type SpotifyTrack = {
   id: string

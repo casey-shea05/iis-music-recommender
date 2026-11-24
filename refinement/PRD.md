@@ -100,6 +100,7 @@ R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, p
 - Long-term reasons and likes are stored in one browser only (no accounts or server).
 - Until R8 is built, typed reasons are saved but don't steer.
 - Tested by the developer only, so perceived control isn't measured.
+- Without a Spotify Premium login, or if Spotify's player can't connect, the app runs on a fake player: the queue, seek bar and skipping work, but no audio plays and no artwork is shown.
 
 ### Ideas for a fuller system
 
