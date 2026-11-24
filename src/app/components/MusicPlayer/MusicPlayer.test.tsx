@@ -81,6 +81,30 @@ describe('MusicPlayer', () => {
     expect(volume()).toHaveValue('0.6')
   })
 
+  it('sets the engine volume from the volume slider', async () => {
+    const player = new FakePlayer(tracks)
+    const setVolume = vi.spyOn(player, 'setVolume')
+    await renderWithPlayback(<MusicPlayer />, { tracks, connection: { player } })
+    fireEvent.change(screen.getByLabelText('Volume', { selector: 'input' }), { target: { value: '0.3' } })
+    expect(setVolume).toHaveBeenLastCalledWith(0.3)
+  })
+
+  it('seeks Now playing from the seek slider', async () => {
+    const player = new FakePlayer(tracks)
+    const seek = vi.spyOn(player, 'seek')
+    await renderWithPlayback(<MusicPlayer />, { tracks, connection: { player } })
+    fireEvent.click(button('Play'))
+    await act(() => vi.advanceTimersByTimeAsync(1000))
+    fireEvent.click(button('Expand player'))
+    const fullScreen = screen.getByRole('dialog', { name: 'Now playing' })
+    expect(within(fullScreen).getByText('0:01')).toBeInTheDocument()
+
+    fireEvent.keyDown(within(fullScreen).getByLabelText('Seek', { selector: 'input' }), { key: 'Home' })
+
+    expect(seek).toHaveBeenLastCalledWith(0)
+    expect(within(fullScreen).getByText('0:00')).toBeInTheDocument()
+  })
+
   it('shows elapsed and total time in the full-screen view', async () => {
     await renderWithPlayback(<MusicPlayer />, { tracks })
     fireEvent.click(button('Play'))
