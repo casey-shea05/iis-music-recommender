@@ -74,7 +74,7 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R8 | Free text is interpreted and applied straight away. Until then, typed reasons are saved and listed but don't steer | S2 | Should | Implement after core build (existing model) |
 | R9 | Reasons lower the ranking of conflicting tracks rather than filtering them out (only Not a fan of this artist excludes). After a reason, unheard tracks in Up next that conflict with it are swapped for higher-scoring ones, and a replacement that still conflicts is tagged "Closest fit". The latest reason on a feature wins, and different features combine | Matters, S1, S3 | Must | Implement |
 | R10 | An Active reasons strip shows the merged effects steering the session | Matters, S1 | Must | Implement |
-| R11 | Tapping the strip opens a reasons panel: each reason is listed under its effect with its source, split into this session and long-term, and can be removed; removing a reason doesn't undo the dislike | Matters, S3 | Must | Implement |
+| R11 | Tapping the strip opens a reasons panel listing each disliked track with the reasons given on it, split into this session and long-term. Removing a disliked track removes all its reasons and lets the track come up again; the panel says so. Reasons can't be removed one at a time | Matters, S3 | Must | Implement |
 | R12 | Tracks in Heard can be disliked later, the same way as the track playing | Wrong | Won't (yet) | Plan |
 | R13 | Start new queue resets all session effects | S1 | Must | Implement |
 | R14 | A brief confirmation after each reason, showing how free text was understood | Matters, S2 | Must (chips) / Should (free text) | Implement; the free-text part comes with R8 |
@@ -87,7 +87,7 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R21 | Rejecting upcoming tracks before they play | Wrong | Won't (yet) | Plan |
 | R22 | Likes and repeated reasons feed the long-term profile, using the reason log | Matters | Won't (yet) | Plan |
 | R23 | Follow-up chips for mood and genre | Missing | Won't (yet) | Plan |
-| R24 | A disliked track can be set back to neutral | S3 | Won't (yet) | Plan |
+| R24 | A disliked track can be set back to neutral: removing it in the reasons panel drops all its reasons and returns it to the pool of tracks that can come up again. A dislike with no reason is listed too (moved from Won't to Must on 25 Nov) | S3 | Must | Implement |
 
 R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, playback and stack decisions are in [ADR 0001](../docs/adr/0001-technical-spike.md): the taste profile comes from Spotify top tracks and artists, features and candidate tracks come from ReccoBeats.
 
@@ -95,6 +95,7 @@ R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, p
 
 - Moods beyond happy/sad (valence) still need free text.
 - Session-only effects only partly address later recommendations missing.
+- "Not a fan of this artist" blocks only a track's primary (first-listed) artist, so a collaboration can block a featured artist the user never judged.
 - The catalogue is a small snapshot (hundreds to a few thousand tracks), so stacked reasons run into Closest fit sooner than they would in a full catalogue.
 - Track features are ReccoBeats' estimates, not Spotify's own values.
 - Long-term reasons and likes are stored in one browser only (no accounts or server).
