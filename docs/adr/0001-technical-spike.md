@@ -65,7 +65,7 @@ File names: components are PascalCase, other modules are camelCase, and generate
 
 ### 5. Free text: accepted but not acted on for now
 
-The text box saves the reason so it shows in the reasons panel, but it doesn't steer. Interpreting free text (R8, R14) comes after the core build: `claude-haiku-5-5` with structured output limited to the fixed set of adjustments, a Console API key in `.env`, and a keyword fallback when no key is set. A Claude subscription doesn't include API access.
+The text box saves the reason so it shows in the Dislikes panel, but it doesn't steer. Interpreting free text (R8, R14) comes after the core build: `claude-haiku-5-5` with structured output limited to the fixed set of adjustments, a Console API key in `.env`, and a keyword fallback when no key is set. A Claude subscription doesn't include API access.
 
 ### 6. Reasons are soft critiques, not filters
 
