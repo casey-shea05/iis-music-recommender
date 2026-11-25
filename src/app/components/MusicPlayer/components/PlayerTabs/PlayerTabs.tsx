@@ -26,13 +26,14 @@ export function PlayerTabs({ track, onSubmit }: Props) {
 function TabsBody({ track, onSubmit }: Props) {
   const { dislikes, blockedArtists } = useDislikes()
   const [chosen, setChosen] = useState<Tab>('reason')
+  // An empty tab can't be opened, but one already open stays open when its last row is removed, so edits can be batched.
+  const empty: Record<Tab, boolean> = { reason: false, dislikes: listedDislikes(dislikes).length === 0, blocked: blockedArtists.length === 0 }
   const tabs: { id: Tab; label: string; disabled: boolean }[] = [
     { id: 'reason', label: 'Reason', disabled: false },
-    { id: 'dislikes', label: 'Dislikes', disabled: listedDislikes(dislikes).length === 0 },
-    { id: 'blocked', label: 'Blocked artists', disabled: blockedArtists.length === 0 },
+    { id: 'dislikes', label: 'Dislikes', disabled: empty.dislikes && chosen !== 'dislikes' },
+    { id: 'blocked', label: 'Blocked artists', disabled: empty.blocked && chosen !== 'blocked' },
   ]
-  // A tab that empties (its last row removed) falls back to Reason.
-  const active = tabs.find((t) => t.id === chosen)?.disabled ? 'reason' : chosen
+  const active = chosen
 
   return (
     <div className="flex min-h-0 flex-col gap-2">

@@ -14,7 +14,7 @@ export function reasonConfirmationText(reasons: readonly Reason[], text: string)
   return typed ? `${noted} ${TYPED_NOTE}` : noted
 }
 
-function effectOf(feature: Extract<Reason, { kind: 'feature' }>['feature'], direction: Extract<Reason, { kind: 'feature' }>['direction']): string {
+export function effectOf(feature: Extract<Reason, { kind: 'feature' }>['feature'], direction: Extract<Reason, { kind: 'feature' }>['direction']): string {
   const chips = REASON_CHIPS.find((c) => c.feature === feature)
   return chips!.sides.find((s) => s.direction === direction)!.effect
 }

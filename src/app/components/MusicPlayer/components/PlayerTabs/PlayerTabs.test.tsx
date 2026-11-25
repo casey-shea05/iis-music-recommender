@@ -30,8 +30,10 @@ describe('PlayerTabs', () => {
     fireEvent.click(tab('Dislikes'))
     expect(screen.getByText('Too slow', { selector: 'p' })).toBeInTheDocument()
     fireEvent.click(button(/Remove dislike of/))
+    // The tab stays open for batch edits, and can't be reopened once left.
+    expect(tab('Dislikes')).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(tab('Reason'))
     expect(tab('Dislikes')).toBeDisabled()
-    expect(tab('Reason')).toHaveAttribute('aria-selected', 'true')
   })
 
   it('keeps an artist-only block in Blocked artists, and unblocks from there', async () => {
@@ -41,6 +43,8 @@ describe('PlayerTabs', () => {
     expect(tab('Dislikes')).toBeDisabled()
     fireEvent.click(tab('Blocked artists'))
     fireEvent.click(button(/Unblock/))
+    expect(tab('Blocked artists')).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(tab('Reason'))
     expect(tab('Blocked artists')).toBeDisabled()
   })
 

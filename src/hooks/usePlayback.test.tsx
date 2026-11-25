@@ -228,4 +228,15 @@ describe('session: Heard and Start new queue', () => {
     expect(result.current.nowPlaying?.id).toBe('b')
     expect(result.current.upNext[0].id).toBe('z')
   })
+
+  it('steerQueue steers the current queue without moving or restarting playback', async () => {
+    const swapped = makeTrack({ id: 'z', title: 'Zulu' })
+    const steer = vi.fn((queue: Queue<CatalogueTrack>) => ({ ...queue, tracks: queue.tracks.map((t) => (t.id === 'c' ? swapped : t)) }))
+    const { result, player } = await connected(undefined, steer)
+    const play = vi.spyOn(player, 'play')
+    act(() => result.current.steerQueue())
+    expect(result.current.nowPlaying?.id).toBe('a')
+    expect(result.current.upNext.map((t) => t.id)).toContain('z')
+    expect(play).not.toHaveBeenCalled()
+  })
 })
