@@ -6,6 +6,7 @@ import { Button } from '@/shadcn/button.tsx'
 import { UpNextList } from './components/UpNextList/UpNextList.tsx'
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { Artwork } from './components/Artwork/Artwork.tsx'
+import { ExplanationText } from './components/ExplanationText/ExplanationText.tsx'
 import { SeekBar } from './components/SeekBar/SeekBar.tsx'
 import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
 import { Transport } from './components/Transport/Transport.tsx'
@@ -40,32 +41,36 @@ export function MusicPlayer() {
             <Transport variant="expanded" />
             <VolumeControl variant="expanded" />
           </div>
-          {/* Right half: IIS-27 still to add explanation, dislike and reasons, Active reasons (Heard now lives on the main page). */}
+          {/* Right half: Up next on top; the lower quarter is left for IIS-28's dislike, reasons and Active reasons (Heard now lives on the main page). */}
           <div className="flex flex-col gap-6">
             <UpNextList tracks={upNext} onSelect={playTrack} />
           </div>
         </div>
+        <ExplanationText variant="expanded" />
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-t bg-background px-4 py-3">
+    <div className="fixed inset-x-0 bottom-0 border-t bg-background">
       {/* Seek runs along the top edge of the bar. */}
       <div className="absolute inset-x-0 top-0 -translate-y-1/2">
         <SeekBar variant="bar" />
       </div>
-      <div className="flex min-w-0 items-center gap-3">
-        <Artwork className="size-14" />
-        <TrackInfo />
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Artwork className="size-14" />
+          <TrackInfo />
+        </div>
+        <Transport />
+        <div className="flex items-center justify-end gap-1">
+          <VolumeControl />
+          <Button variant="ghost" size="icon" aria-label="Expand player" onClick={() => setExpanded(true)}>
+            <Maximize2 />
+          </Button>
+        </div>
       </div>
-      <Transport />
-      <div className="flex items-center justify-end gap-1">
-        <VolumeControl />
-        <Button variant="ghost" size="icon" aria-label="Expand player" onClick={() => setExpanded(true)}>
-          <Maximize2 />
-        </Button>
-      </div>
+      <ExplanationText />
     </div>
   )
 }

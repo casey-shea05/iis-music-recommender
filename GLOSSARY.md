@@ -63,3 +63,7 @@ _Avoid_: seed, source artist
 **Feature**
 A measurable property of a track that adjustments act on and explanations cite, such as tempo, intensity or acousticness.
 _Avoid_: attribute, tag
+
+**Explanation**
+What Now playing shows to say why the track was picked: its anchor artist plus the one or two features closest to the user's taste. It claims closeness, not a match. Only the track playing has one.
+_Avoid_: reason (that is the user's), justification
