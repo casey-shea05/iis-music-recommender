@@ -67,9 +67,9 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R1 | A discovery queue built from listening history, with three parts: Now playing, Up next (5 tracks) and Heard. The queue is one ordered list with a cursor: everything after the cursor is Up next, and fresh tracks are added when Up next runs short. Heard is a record of the tracks played this session, kept until Start new queue: clicking a Heard track plays it again, and everything after it stays in Up next | Situation | Must | Implement |
 | R2 | The track playing always shows a short explanation: one artist anchor plus one or two features | Missing, S1 | Must | Implement |
 | R3 | A skip is neutral: no prompt, and the system learns nothing from it | Wrong | Must | Implement |
-| R4 | A dislike stops the track, removes it and opens a reason prompt | Wrong, S1 | Must | Implement |
-| R5 | The prompt shows chips adapted to the track (one side each of tempo, intensity, mood and acoustic, plus Not a fan of this artist) and a free-text box; several can be combined | Missing, S1, S2 | Must | Implement |
-| R6 | The prompt can be dismissed; a dislike with no reason only removes the track, and no reason is inferred | Wrong | Must | Implement |
+| R4 | The expanded player always shows a reason panel for the track playing, and the minimized bar has a Dislike button that opens the expanded player. Submitting the panel records a dislike: the track is removed from the queue and Heard, and the next one plays | Wrong, S1 | Must | Implement |
+| R5 | The reason panel shows one pair of chips per feature (tempo, intensity, mood and acoustic, e.g. Too slow / Too fast), a Not a fan of this artist chip and a free-text box; picking one side of a pair deselects the other, and chips can be combined. Nothing is recorded until Submit | Missing, S1, S2 | Must | Implement |
+| R6 | Submitting with nothing picked is a dislike with no reason: it only removes the track, and no reason is inferred. The panel resets whenever the track playing changes | Wrong | Must | Implement |
 | R7 | Tempo, intensity, mood, acoustic and free text apply for this session only; Not a fan of this artist applies long-term | Wrong, S1 | Must | Implement |
 | R8 | Free text is interpreted and applied straight away. Until then, typed reasons are saved and listed but don't steer | S2 | Should | Implement after core build (existing model) |
 | R9 | Reasons lower the ranking of conflicting tracks rather than filtering them out (only Not a fan of this artist excludes). After a reason, unheard tracks in Up next that conflict with it are swapped for higher-scoring ones, and a replacement that still conflicts is tagged "Closest fit". The latest reason on a feature wins, and different features combine | Matters, S1, S3 | Must | Implement |
@@ -77,7 +77,7 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R11 | Tapping the strip opens a reasons panel listing each disliked track with the reasons given on it, split into this session and long-term. Removing a disliked track removes all its reasons and lets the track come up again; the panel says so. Reasons can't be removed one at a time | Matters, S3 | Must | Implement |
 | R12 | Tracks in Heard can be disliked later, the same way as the track playing | Wrong | Won't (yet) | Plan |
 | R13 | Start new queue resets all session effects | S1 | Must | Implement |
-| R14 | A brief confirmation after each reason, showing how free text was understood | Matters, S2 | Must (chips) / Should (free text) | Implement; the free-text part comes with R8 |
+| R14 | A brief toast after Submit, showing how the reasons were understood. For free text, the interpretation comes with R8; until then it says typed reasons are saved but don't steer | Matters, S2 | Must (chips) / Should (free text) | Implement; the free-text part comes with R8 |
 | R15 | A reason can be corrected in the user's own words and re-interpreted | S3b | Won't (yet) | Plan |
 | R16 | Tracks can be liked and saved to a liked playlist; a like doesn't steer | Situation | Won't (yet) | Plan |
 | R17 | Each dislike is logged with its reasons and how they were interpreted | Matters | Won't (yet) | Plan |
@@ -119,6 +119,7 @@ Decisions built with QOC. Criteria are concepts from the IIS Week 1–4 lectures
 | --- | --- | --- | --- |
 | How do users give a reason? | Chips only / free text only / **chips + free text** | Chips show what can be said instead of a blank box (recognition over recall, W2 L5); the screen holds the common options and language covers the exceptions (hybrid pattern, W3 L7); a text box on its own suggests the system understands anything (expectation gulf, W1 L3) | R4, R5, R8 |
 | What does the system learn without a reason? | Infer from skips / **a skip is neutral; a dislike with no reason only removes the track** | A skip has too many possible causes to guess from (interprets under uncertainty, W1 L2); better to wait than act on a weak signal (act, ask or wait, W1 L3); likes don't steer, so only reasons the user gives change the queue | R3, R6, R16 |
+| Which side of a feature do the chips offer? | Only the side the track sits on, judged against the profile / **both sides of each feature as a pair** | The system can't know which way a track felt wrong, and "slow" is subjective, so a wrong guess would hide the chip the user wanted (interprets under uncertainty, W1 L2); showing both sides lets people pick instead of recall (recognition over recall, W2 L5) | R5 |
 | How is typed feedback applied? | Confirm first / **apply now, show how it was read, allow fixing** / keyword match | Low stakes and undoable, so do it and show it (do, confirm or never, W4 L12); showing the reading lets a misread be caught (grounding by display, W3 L7) | R8, R14, R15 |
 | How far does a reason reach? | All long-term / all session / **split: tempo, intensity, mood, acoustic and free text for this session; artist long-term** | "Too slow" is about the moment, not taste, and making it permanent causes the borrowed-afternoon problem (Amershi et al. "update cautiously", cited in W1 L3); old moods turn into stale memory (W4 L10) | R7, R13, R22 |
 | How is the effect made visible? | Silent re-rank / regenerate the whole queue / **swap only conflicting unheard tracks, tag them, show the strip** | A change with no visible cause breaks "I did that" (thermostat problem, W2 L6); tell users about changes (Amershi et al., cited in W1 L3); order shapes what gets heard, so only conflicting tracks move (ranking is never neutral, W2 L6) | R9, R10, R18 |
@@ -134,7 +135,7 @@ The prototype succeeds if steering visibly works, takes little effort and recove
 | Criterion | Traces to | How checked |
 | --- | --- | --- |
 | **Steering works:** after a reason, most swapped tracks in Up next fit it, and each shows the reason that brought it in | Matters, S1 | Trace, then manual test |
-| **Giving a reason is low effort:** a chip reason takes at most 2 taps after a dislike, and dismissing the prompt takes 1 | Wrong, S1 | Manual walkthrough |
+| **Giving a reason is low effort:** in the expanded player, a chip reason takes at most 2 taps (a chip, then Submit) and a dislike with no reason takes 1 (Submit) | Wrong, S1 | Manual walkthrough |
 | **Typed reasons are understood** (only once R8 is built): at least 8 of 10 prepared phrasings map to the intended adjustment, across 2–3 runs | S2 | Automated test set |
 | **Over-steering can be recovered:** after stacked reasons push Up next into Closest fit, removing one effect in the reasons panel brings fitting tracks back | S3 | Manual test |
 

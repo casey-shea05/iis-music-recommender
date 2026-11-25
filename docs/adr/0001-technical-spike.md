@@ -69,7 +69,7 @@ The text box saves the reason so it shows in the reasons panel, but it doesn't s
 
 ### 6. Reasons are soft critiques, not filters
 
-Chips: one side each of tempo, intensity (energy), mood (valence) and acoustic (acousticness), whichever applies to the disliked track, plus *Not a fan of this artist*. "Not right now" was dropped: it changed nothing and overlapped with skip and dislike.
+Chips: both sides of tempo, intensity (energy), mood (valence) and acoustic (acousticness) as pairs, where choosing one side deselects the other, plus *Not a fan of this artist*. The side isn't guessed from the disliked track, because "slow" is subjective (amended 2026-11-25, IIS-28). "Not right now" was dropped: it changed nothing and overlapped with skip and dislike.
 
 - A chip creates an adjustment with a **threshold taken from the disliked track** (e.g. "Too slow" on an 85 bpm track means "faster than 85 bpm"). The latest reason on a feature replaces the earlier one; different features combine.
 - **Score** = similarity to the profile + a top-artist bonus − a penalty for each conflict, growing with how far the track sits on the wrong side.
