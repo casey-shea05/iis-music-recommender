@@ -5,14 +5,7 @@ import type { CatalogueTrack } from '@/recommender/catalogue.ts'
 import type { FeatureName } from '@/recommender/scoring.ts'
 import { Button } from '@/shadcn/button.tsx'
 import { cn } from '@/shadcn/utils.ts'
-
-/** One pair per feature. `direction` is what the chip asks for: "Too slow" wants tempo higher. */
-const PAIRS: { feature: FeatureName; options: [{ label: string; direction: Direction }, { label: string; direction: Direction }] }[] = [
-  { feature: 'tempo', options: [{ label: 'Too slow', direction: 'higher' }, { label: 'Too fast', direction: 'lower' }] },
-  { feature: 'energy', options: [{ label: 'Too mellow', direction: 'higher' }, { label: 'Too intense', direction: 'lower' }] },
-  { feature: 'valence', options: [{ label: 'Too gloomy', direction: 'higher' }, { label: 'Too upbeat', direction: 'lower' }] },
-  { feature: 'acousticness', options: [{ label: 'Too acoustic', direction: 'lower' }, { label: 'Too electronic', direction: 'higher' }] },
-]
+import { REASON_CHIPS } from '@/utils/reasonChips.ts'
 
 type Props = {
   track: CatalogueTrack | null
@@ -41,12 +34,15 @@ function PanelBody({ track, onSubmit }: Props) {
   }
 
   function submit() {
-    const reasons: Reason[] = PAIRS.flatMap(({ feature }) => {
+    const reasons: Reason[] = REASON_CHIPS.flatMap(({ feature }) => {
       const direction = picked[feature]
       return direction ? [{ kind: 'feature' as const, feature, direction }] : []
     })
     if (artist) reasons.push({ kind: 'artist' })
     onSubmit(reasons, text)
+    setPicked({})
+    setArtist(false)
+    setText('')
   }
 
   return (
@@ -55,10 +51,10 @@ function PanelBody({ track, onSubmit }: Props) {
         Not feeling this one?
       </h2>
       <div className="grid grid-cols-2 gap-2">
-        {PAIRS.map(({ feature, options }) => (
+        {REASON_CHIPS.map(({ feature, name, sides }) => (
           // One joined control per feature: the two sides sit together, so picking one reads as leaving the other.
-          <div key={feature} role="group" aria-label={feature} className="grid grid-cols-2 gap-0.5 rounded-lg border bg-muted/40 p-0.5">
-            {options.map(({ label, direction }) => (
+          <div key={feature} role="group" aria-label={name} className="grid grid-cols-2 gap-0.5 rounded-lg border bg-muted/40 p-0.5">
+            {sides.map(({ label, direction }) => (
               <Chip key={label} pressed={picked[feature] === direction} disabled={disabled} onClick={() => toggle(feature, direction)}>
                 {label}
               </Chip>
