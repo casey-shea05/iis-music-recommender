@@ -83,5 +83,5 @@ function PanelBody({ track, onSubmit }: Props) {
 
 function Chip({ pressed, outlined, className, ...props }: { pressed: boolean; outlined?: boolean } & React.ComponentProps<typeof Button>) {
   const idle = outlined ? 'outline' : 'ghost'
-  return <Button variant={pressed ? 'default' : idle} size="lg" aria-pressed={pressed} className={cn('px-1', className)} {...props} />
+  return <Button variant={pressed ? 'default' : idle} size="lg" aria-pressed={pressed} className={cn('px-1 transition-none', className)} {...props} />
 }
