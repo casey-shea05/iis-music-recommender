@@ -5,13 +5,15 @@ import App from './app/App.tsx'
 import { PlaybackProvider } from './hooks/usePlayback.tsx'
 import './index.css'
 import type { Catalogue } from './recommender/catalogue.ts'
+import { scoringChooser } from './recommender/scoring.ts'
 
-// The queue draws fresh tracks from the catalogue in file order (IIS-27 adds the recommender).
+// The queue draws fresh tracks from the catalogue, highest score first.
 const { tracks } = catalogue as Catalogue
+const chooser = scoringChooser(catalogue as Catalogue)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PlaybackProvider tracks={tracks}>
+    <PlaybackProvider tracks={tracks} chooser={chooser}>
       <App />
     </PlaybackProvider>
   </StrictMode>,

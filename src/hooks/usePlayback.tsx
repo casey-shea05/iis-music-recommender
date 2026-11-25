@@ -7,7 +7,7 @@ import type { Player } from '@/playback/player.ts'
 import type { CatalogueTrack } from '@/recommender/catalogue.ts'
 import {
   catalogueChooser, createQueue, hasNext, hasPrevious, jumpToSkipping, next, nowPlaying, previous, recordHeard, topUp, upNext,
-  type Queue,
+  type Chooser, type Queue,
 } from '@/recommender/queue.ts'
 
 export type Playback = {
@@ -52,6 +52,8 @@ const PlaybackContext = createContext<Playback | null>(null)
 
 type ProviderProps = {
   tracks: readonly CatalogueTrack[]
+  /** Picks fresh tracks for Up next; defaults to catalogue file order. */
+  chooser?: Chooser<CatalogueTrack>
   /** Swapped in tests; defaults to trying Spotify, then the fake engine. */
   connect?: () => Promise<ConnectedPlayer>
   /** Swapped in tests; defaults to the Spotify login from .env. */
@@ -59,11 +61,11 @@ type ProviderProps = {
   children: ReactNode
 }
 
-export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children }: ProviderProps) {
+export function PlaybackProvider({ tracks, chooser, connect, logIn = startLogIn, children }: ProviderProps) {
   const [connection, setConnection] = useState<ConnectedPlayer | null>(null)
   const playerRef = useRef<Player | null>(null)
-  const choose = useMemo(() => catalogueChooser(tracks), [tracks])
-  const [queue, setQueue] = useState<Queue<CatalogueTrack>>(() => topUp(createQueue([]), catalogueChooser(tracks)))
+  const choose = useMemo(() => chooser ?? catalogueChooser(tracks), [chooser, tracks])
+  const [queue, setQueue] = useState<Queue<CatalogueTrack>>(() => topUp(createQueue([]), chooser ?? catalogueChooser(tracks)))
   const [heard, setHeard] = useState<readonly CatalogueTrack[]>([])
   // Engine events read the ref, because they're subscribed once; the state re-renders.
   const queueRef = useRef(queue)
