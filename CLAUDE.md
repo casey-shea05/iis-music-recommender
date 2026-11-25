@@ -11,8 +11,8 @@ Outside `src/`:
 - `docs/PRD.md`: the design brief, covering requirements, known limitations and the rationale table.
 - `submissions/`: what gets handed in besides the code.
   - `literature-review/`: the literature review and its research logs. `research-papers/` inside it is gitignored.
-  - `report/`: the report, with `storyboards/` (and the Gemini prompts that made them) `screenshots/` of the built UI, and `diagram/` (the system and spine diagrams: each `.html` is the source, the `.png` goes in the report).
-- `scripts/`: the catalogue script (`npm run catalogue`). It writes `data/catalogue.json`, which is gitignored personal data: only `src/main.tsx` imports it, and tests use `makeTrack` from `src/testFixtures.tsx`.
+  - `report/`: the report, with `storyboards/` (and the Gemini prompts that made them), `screenshots/` of the built UI (`raw/` holds the captures, `flows/` the report's flow strips built from them by `build.py` and `render.sh`), and `diagram/` (the system and spine diagrams: each `.html` is the source, the `.png` goes in the report).
+- `scripts/`: the catalogue script (`npm run catalogue`). It writes `data/catalogue.json`, which is committed so the app runs without keys (rerunning the script replaces it with the runner's own data): only `src/main.tsx` imports it, and tests use `makeTrack` from `src/testFixtures.tsx`.
 
 ## UI verification
 
