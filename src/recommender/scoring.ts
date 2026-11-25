@@ -2,7 +2,7 @@
 // Pure TypeScript: no React, no Spotify.
 
 import type { Catalogue, CatalogueTrack, Features } from './catalogue.ts'
-import { effects, isExcluded, type Adjustment, type Dislike } from './dislikes.ts'
+import { effects, isExcluded, type Adjustment, type BlockedArtist, type Dislike } from './dislikes.ts'
 import type { Chooser } from './queue.ts'
 
 export type FeatureName = keyof Features
@@ -95,20 +95,22 @@ export function score(
 
 /**
  * The scoring chooser: the highest-scoring fresh tracks first, never top tracks and never excluded tracks.
- * `getDislikes` is read on every call, so the chooser follows the user's reasons without being rebuilt.
+ * `getDislikes` and `getBlockedArtists` are read on every call, so the chooser follows the user's reasons without being rebuilt.
  */
 export function scoringChooser(
   catalogue: Pick<Catalogue, 'profile' | 'tracks'>,
   getDislikes: () => readonly Dislike[] = () => [],
+  getBlockedArtists: () => readonly BlockedArtist[] = () => [],
 ): Chooser<CatalogueTrack> {
   const profile = tasteProfile(catalogue)
   const topArtistIds = new Set(catalogue.profile.topArtists.map((a) => a.id))
   return (queued, count) => {
     const seen = new Set(queued.map((t) => t.id))
-    const dislikes = [...getDislikes()]
+    const dislikes = getDislikes()
+    const blocked = getBlockedArtists()
     const adjustments = effects(dislikes)
     return catalogue.tracks
-      .filter((t) => !t.isTopTrack && !seen.has(t.id) && !isExcluded(t, dislikes))
+      .filter((t) => !t.isTopTrack && !seen.has(t.id) && !isExcluded(t, dislikes, blocked))
       .map((t) => ({ t, s: score(t, profile, topArtistIds, adjustments) }))
       .sort((a, b) => b.s - a.s)
       .slice(0, count)
