@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { vi } from 'vitest'
 import { PlaybackProvider, usePlayback } from '@/hooks/usePlayback.tsx'
 import type { ConnectedPlayer } from '@/playback/connectPlayer.ts'
@@ -24,14 +24,15 @@ type RenderOptions = {
   tracks: CatalogueTrack[]
   connection?: Partial<ConnectedPlayer>
   logIn?: (() => void) | null
+  profile?: ComponentProps<typeof PlaybackProvider>['profile']
 }
 
 /** Renders UI inside a PlaybackProvider on the fake engine and waits for it to connect. */
-export async function renderWithPlayback(ui: ReactNode, { tracks, connection, logIn = vi.fn() }: RenderOptions) {
+export async function renderWithPlayback(ui: ReactNode, { tracks, connection, logIn = vi.fn(), profile }: RenderOptions) {
   const player = (connection?.player as FakePlayer | undefined) ?? new FakePlayer(tracks)
   const connect = async () => ({ mode: 'fake', reason: 'logged-out', player, ...connection }) as ConnectedPlayer
   const rendered = render(
-    <PlaybackProvider tracks={tracks} connect={connect} logIn={logIn}>
+    <PlaybackProvider tracks={tracks} profile={profile} connect={connect} logIn={logIn}>
       {ui}
       <ReadyProbe />
     </PlaybackProvider>,
