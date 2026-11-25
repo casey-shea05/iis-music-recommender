@@ -1,5 +1,5 @@
-#discovery files
-discovery/research-papers
+# Literature review source papers
+submissions/literature-review/research-papers
 # Personal data and secrets
 data/catalogue.json
 data/catalogue-cache.json
