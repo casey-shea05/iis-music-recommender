@@ -42,7 +42,8 @@ export type Playback = {
   playTrack(track: CatalogueTrack): void
   /**
    * Removes Now playing from the queue and from Heard (it is never recorded), plays the track below and tops up.
-   * Unheard Up next tracks that `isExcluded` (e.g. a newly blocked artist) are dropped first.
+   * Unheard Up next tracks that `isExcluded` (e.g. a newly blocked artist) are dropped first, and the queue is
+   * then steered, so a dislike is one queue change.
    */
   removeNowPlaying(isExcluded?: (track: CatalogueTrack) => boolean): void
   /** Ends the session: empties Heard, rebuilds the queue from the first track and plays it. */
@@ -66,6 +67,8 @@ type ProviderProps = {
   profile?: { features: Features; topArtists: ArtistRef[] }
   /** Picks fresh tracks for Up next; defaults to catalogue file order. */
   chooser?: Chooser<CatalogueTrack>
+  /** Swaps conflicting unheard Up next tracks for better ones after a dislike. Defaults to leaving the queue alone. */
+  steer?: (queue: Queue<CatalogueTrack>, heard: readonly CatalogueTrack[]) => Queue<CatalogueTrack>
   /** Swapped in tests; defaults to trying Spotify, then the fake engine. */
   connect?: () => Promise<ConnectedPlayer>
   /** Swapped in tests; defaults to the Spotify login from .env. */
@@ -73,7 +76,7 @@ type ProviderProps = {
   children: ReactNode
 }
 
-export function PlaybackProvider({ tracks, profile, chooser, connect, logIn = startLogIn, children }: ProviderProps) {
+export function PlaybackProvider({ tracks, profile, chooser, steer, connect, logIn = startLogIn, children }: ProviderProps) {
   const [connection, setConnection] = useState<ConnectedPlayer | null>(null)
   const playerRef = useRef<Player | null>(null)
   const choose = useMemo(() => chooser ?? catalogueChooser(tracks), [chooser, tracks])
@@ -217,9 +220,11 @@ export function PlaybackProvider({ tracks, profile, chooser, connect, logIn = st
         const removed = nowPlaying(queueRef.current)
         if (!removed) return
         const current = isExcluded ? dropExcluded(queueRef.current, heard, isExcluded, choose) : queueRef.current
-        setHeard((h) => removeHeard(h, removed.id))
+        const heardAfter = removeHeard(heard, removed.id)
+        setHeard(heardAfter)
         const after = remove(current, current.cursor)
-        if (nowPlaying(topUp(after, choose))) return moveCursorAndPlay(after)
+        const filled = topUp(after, choose)
+        if (nowPlaying(filled)) return moveCursorAndPlay(steer ? steer(filled, heardAfter) : after)
         // Nothing left to play: empty the queue and stop.
         queueRef.current = after
         setQueue(after)
@@ -235,7 +240,7 @@ export function PlaybackProvider({ tracks, profile, chooser, connect, logIn = st
       toggleMute,
       logIn,
     }),
-    [connection, queue, heard, choose, profile, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
+    [connection, queue, heard, choose, steer, profile, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
   )
 
   return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>
