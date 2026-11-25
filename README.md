@@ -2,7 +2,7 @@
 
 A music recommender prototype in which each track explains why it was chosen, and the listener can answer that explanation with a reason for disliking it (for example "Too slow"). The reason steers what plays next, and the listener can see and undo its effects. Built for the Intelligent Interactive Systems module, Assignment 2.
 
-**Prose word count:** 1,475 (including headings and tables; excluding code, setup commands and link addresses)
+**Prose word count:** 1,468 (including headings and tables; excluding code, setup commands and link addresses)
 **Submitted version:** [`v1.0`](https://github.com/casey-shea05/iis-music-recommender/releases/tag/v1.0)
 **Setup:** [docs/SETUP.md](docs/SETUP.md). It runs without any keys.
 
@@ -92,8 +92,7 @@ Each significant change below links to its pull request, which holds the full de
 
 **Original, reused and assisted work.** The problem, requirements, design decisions and their changes are the developer's own, recorded in the [design brief](docs/PRD.md), the decision records in `docs/adr/` and the Jira tickets behind each pull request. Reused material is limited to open-source libraries, the shadcn/ui component sources in `src/shadcn/` and data from Spotify, Last.fm and ReccoBeats.
 
-- **Claude Code** (Anthropic) wrote most of the code and tests from tickets the developer wrote, one ticket per branch, and drafted the pull request descriptions, documentation and diagram sources. It also captured the report screenshots through its Chrome extension and wrote the script that crops them into flow strips (`submissions/report/screenshots/flows/`). Its output was checked by reviewing every pull request, running the tests, and using the app in the browser.
-- **Claude** (claude.ai) helped draft and edit the report.
+- **Claude Code** (Anthropic) wrote most of the code and tests from tickets the developer wrote, one ticket per branch, and drafted the pull request descriptions, documentation, diagram sources and the report. It also captured the report screenshots through its Chrome extension and wrote the script that crops them into flow strips (`submissions/report/screenshots/flows/`). Its output was checked by reviewing every pull request, running the tests, and using the app in the browser.
 - **Gemini** generated the storyboard images from panel scripts whose on-screen text was taken from the code. Each panel was checked against its script and fixed with follow-up prompts; [prompts.md](submissions/report/storyboards/prompts.md) records the prompts and fixes.
 
 Examples of checking and changing AI output:
@@ -106,7 +105,7 @@ Examples of checking and changing AI output:
 
 | Path | Contents |
 | --- | --- |
-| [`submissions/report/`](submissions/report/) | Figures for the report, which is submitted separately |
+| [`submissions/report/`](submissions/report/) | [The project report (PDF)](<submissions/report/IIS - Project Report.pdf>) and its figures |
 | [`submissions/report/diagram/`](submissions/report/diagram/) | System and conceptual-spine diagrams (`.html` source, `.png` in the report) |
 | [`submissions/report/storyboards/`](submissions/report/storyboards/) | Three storyboards and the Gemini prompts |
 | [`submissions/report/screenshots/`](submissions/report/screenshots/) | `raw/`: 16 screenshots of the built app; `flows/`: the flow strips cropped from them |
