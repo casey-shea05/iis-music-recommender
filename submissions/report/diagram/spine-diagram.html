@@ -1,0 +1,183 @@
+<title>Recommender Conceptual Spine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: the lecture's conceptual spine as rows: layer, what our recommender does, the part that does it, and why it matters (required property, inference, status). */
+:root {
+  --bg: #f6f6fb; --panel: #ffffff; --row: #f7f7fb; --fg: #1b2330; --muted: #5a6577; --line: #d3d9e1;
+  --pill: #263241; --pill-fg: #ffffff;
+  --ai: #2f8f6f; --ai-bg: #e6f6ef;
+  --ui: #2a6cae; --ui-bg: #dcecfb; --state: #6b49b0; --state-bg: #ece3fb;
+  --play: #4f5a8a; --play-bg: #e4e7f7; --cat: #806300; --cat-bg: #faf0c4;
+  --l-navy: #dde5f4; --lt-navy: #2a3f66; --l-blue: #d5ebfa; --lt-blue: #1c5f8c; --l-grey: #e7e9ef; --lt-grey: #4a5364; --l-green: #e3f1d3; --lt-green: #46691c; --l-purple: #e9e0fa; --lt-purple: #5a3c9c; --l-red: #fbdde4; --lt-red: #9b324b;
+  --prop-bg: #fde3cf; --prop-fg: #8a4317; --inf-bg: #bfe8d8; --inf-fg: #17543f;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10141a; --panel: #151a21; --row: #1a2029; --fg: #e3e8ef; --muted: #9aa5b5; --line: #343d4a;
+  --pill: #3a4757; --pill-fg: #f2f5f9; --ai: #6cc7a8; --ai-bg: #16302a;
+  --ui: #8db4ef; --ui-bg: #1c2a40; --state: #b9a2e6; --state-bg: #2a2340;
+  --play: #b3bdcb; --play-bg: #262d37; --cat: #e8d27a; --cat-bg: #2f2a12; --l-navy: #26324a; --lt-navy: #c3d2ee; --l-blue: #1d3446; --lt-blue: #a9d5f5; --l-grey: #2b2f37; --lt-grey: #c9cfda; --l-green: #283420; --lt-green: #c6e3a3; --l-purple: #2f2645; --lt-purple: #cdb9f3; --l-red: #3e2229; --lt-red: #f3b3c1; --prop-bg: #3d2a1c; --prop-fg: #f6c39c; --inf-bg: #1f4a3c; --inf-fg: #b7ecd7; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10141a; --panel: #151a21; --row: #1a2029; --fg: #e3e8ef; --muted: #9aa5b5; --line: #343d4a;
+  --pill: #3a4757; --pill-fg: #f2f5f9; --ai: #6cc7a8; --ai-bg: #16302a;
+  --ui: #8db4ef; --ui-bg: #1c2a40; --state: #b9a2e6; --state-bg: #2a2340;
+  --play: #b3bdcb; --play-bg: #262d37; --cat: #e8d27a; --cat-bg: #2f2a12; --l-navy: #26324a; --lt-navy: #c3d2ee; --l-blue: #1d3446; --lt-blue: #a9d5f5; --l-grey: #2b2f37; --lt-grey: #c9cfda; --l-green: #283420; --lt-green: #c6e3a3; --l-purple: #2f2645; --lt-purple: #cdb9f3; --l-red: #3e2229; --lt-red: #f3b3c1; --prop-bg: #3d2a1c; --prop-fg: #f6c39c; --inf-bg: #1f4a3c; --inf-fg: #b7ecd7; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); }
+main { max-width: 1320px; margin: 0 auto; padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--display); font-weight: 600; font-size: 1.6rem; margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0 0 20px; line-height: 1.5; }
+figure { margin: 0; }
+.scroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+svg { display: block; width: 100%; min-width: 960px; height: auto; font-family: var(--body); }
+figcaption { color: var(--muted); max-width: 78ch; margin-top: 14px; line-height: 1.55; font-size: 0.92rem; }
+
+/* SVG classes */
+.bgfill { fill: var(--panel); }
+.row { fill: var(--row); }
+.row-ai { fill: var(--ai-bg); stroke: var(--ai); stroke-opacity: .6; stroke-width: 1.4; }
+.pill { fill: var(--pill); }
+.pill-t { fill: var(--pill-fg); font-size: 13.5px; font-weight: 600; }
+.num { fill: var(--pill-fg); font-size: 12px; opacity: .7; }
+.d { fill: var(--fg); font-size: 14.5px; }
+.colh { fill: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: .06em; }
+.lab { fill: var(--fg); font-size: 12px; }
+.ct { font-size: 12px; font-weight: 600; text-anchor: middle; }
+.c-ui { fill: var(--ui-bg); } .t-ui { fill: var(--ui); }
+.c-state { fill: var(--state-bg); } .t-state { fill: var(--state); }
+.c-rec { fill: var(--ai-bg); stroke: var(--ai); } .t-rec { fill: var(--ai); }
+.c-play { fill: var(--play-bg); } .t-play { fill: var(--play); }
+.c-cat { fill: var(--cat-bg); } .t-cat { fill: var(--cat); }
+.c-ext { fill: none; stroke: var(--cat); } .t-ext { fill: var(--cat); }
+.c-prop { fill: var(--prop-bg); } .t-prop { fill: var(--prop-fg); }
+.c-inf { fill: var(--inf-bg); } .t-inf { fill: var(--inf-fg); }
+.c-note { fill: none; stroke: var(--ai); stroke-width: 1.3; } .t-note { fill: var(--ai); }
+.c-sim { fill: none; stroke: var(--muted); stroke-dasharray: 2 3; stroke-width: 1.3; }
+.c-plan { fill: none; stroke: var(--muted); stroke-dasharray: 6 4; stroke-width: 1.3; }
+.t-muted { fill: var(--muted); }
+.loop { fill: none; stroke: var(--ai); stroke-width: 2; }
+.mk { fill: var(--ai); }
+.loop-t { fill: var(--ai); font-size: 12px; font-weight: 600; }
+
+.l1 { fill: var(--l-navy); } .t1 { fill: var(--lt-navy); }
+.l2 { fill: var(--l-blue); } .t2 { fill: var(--lt-blue); }
+.l3 { fill: var(--l-grey); } .t3 { fill: var(--lt-grey); }
+.l4 { fill: var(--l-green); } .t4 { fill: var(--lt-green); }
+.l5 { fill: var(--l-purple); } .t5 { fill: var(--lt-purple); }
+.l6 { fill: var(--l-red); } .t6 { fill: var(--lt-red); }
+.l7 { fill: var(--l-blue); } .t7 { fill: var(--lt-blue); }
+.l8 { fill: var(--l-grey); } .t8 { fill: var(--lt-grey); }
+.l9 { fill: var(--l-green); } .t9 { fill: var(--lt-green); }
+.l10 { fill: var(--l-purple); } .t10 { fill: var(--lt-purple); }
+.l11 { fill: var(--l-red); } .t11 { fill: var(--lt-red); }
+</style>
+
+<main>
+  <h1>Recommender Conceptual Spine</h1>
+  <p class="lede">The prototype read through the lecture's conceptual spine: what our recommender does at each layer, which part of the system does it, and why that layer matters for it to count as an intelligent interactive system.</p>
+
+  <figure>
+    <div class="scroll">
+<svg viewBox="0 0 1280 770" role="img" aria-label="The music recommender mapped onto the 11-layer conceptual spine. All four required properties are present: sensing of listening history and reasons, a model that infers taste and interprets reasons, action through playback with an explanation, and feedback through reasons and undo. Inference sits in the model, planning and adaptation layers. Adaptation lasts only for the session; the fake engine is simulated and free-text interpretation is planned.">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk" d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+  <rect class="bgfill" width="1280" height="770"/>
+
+  <!-- Legend -->
+  <rect class="row-ai" x="64" y="18" width="26" height="16" rx="4"/><text class="lab" x="98" y="31">Inference: interpreting under uncertainty</text>
+  <rect class="c-prop" x="400" y="18" width="62" height="16" rx="8"/><text class="ct t-prop" x="431" y="30" style="font-size:10.5px">Property</text><text class="lab" x="470" y="31">one of the four every IIS needs</text>
+  <rect class="c-sim" x="720" y="18" width="26" height="16" rx="8"/><text class="lab" x="754" y="31">Simulated</text>
+  <rect class="c-plan" x="840" y="18" width="26" height="16" rx="8"/><text class="lab" x="874" y="31">Planned, not built</text>
+
+  <!-- Column heads -->
+  <text class="colh" x="64" y="72">SPINE LAYER</text>
+  <text class="colh" x="262" y="72">IN OUR RECOMMENDER</text>
+  <text class="colh" x="880" y="72">PART</text>
+  <text class="colh" x="1034" y="72">WHY IT MATTERS</text>
+
+  <!-- 1 Human -->
+  <rect class="row" x="52" y="84" width="1212" height="52" rx="8"/>
+  <rect class="l1" x="60" y="92" width="182" height="36" rx="6"/><text class="num t1" x="72" y="115">1</text><text class="pill-t t1" x="98" y="115">Human</text>
+  <text class="d" x="262" y="115">A listener who wants a queue that fits what they feel like now</text>
+
+  <!-- 2 Sensing -->
+  <rect class="row" x="52" y="144" width="1212" height="52" rx="8"/>
+  <rect class="l2" x="60" y="152" width="182" height="36" rx="6"/><text class="num t2" x="72" y="175">2</text><text class="pill-t t2" x="98" y="175">Sensing / input</text>
+  <text class="d" x="262" y="175">The listener's Spotify history, plus the reasons they give</text>
+  <rect class="c-cat" x="880" y="156" width="140" height="28" rx="14"/><text class="ct t-cat" x="950" y="175">Catalogue + UI</text>
+  <rect class="c-prop" x="1034" y="156" width="100" height="28" rx="14"/><text class="ct t-prop" x="1084" y="175">Property 1</text>
+
+  <!-- 3 Context -->
+  <rect class="row" x="52" y="204" width="1212" height="52" rx="8"/>
+  <rect class="l3" x="60" y="212" width="182" height="36" rx="6"/><text class="num t3" x="72" y="235">3</text><text class="pill-t t3" x="98" y="235">Context</text>
+  <text class="d" x="262" y="235">Now playing, the Up next queue, and the rejected track's audio features</text>
+  <rect class="c-state" x="880" y="216" width="140" height="28" rx="14"/><text class="ct t-state" x="950" y="235">Session state</text>
+
+  <!-- 4 Memory -->
+  <rect class="row" x="52" y="264" width="1212" height="52" rx="8"/>
+  <rect class="l4" x="60" y="272" width="182" height="36" rx="6"/><text class="num t4" x="72" y="295">4</text><text class="pill-t t4" x="98" y="295">Memory</text>
+  <text class="d" x="262" y="295">Blocked artists, kept between visits; everything else resets on reload</text>
+  <rect class="c-state" x="880" y="276" width="140" height="28" rx="14"/><text class="ct t-state" x="950" y="295">localStorage</text>
+
+  <!-- 5 Knowledge -->
+  <rect class="row" x="52" y="324" width="1212" height="52" rx="8"/>
+  <rect class="l5" x="60" y="332" width="182" height="36" rx="6"/><text class="num t5" x="72" y="355">5</text><text class="pill-t t5" x="98" y="355">Knowledge</text>
+  <text class="d" x="262" y="355">Similar artists from Last.fm and audio features from ReccoBeats</text>
+  <rect class="c-cat" x="880" y="336" width="140" height="28" rx="14"/><text class="ct t-cat" x="950" y="355">Catalogue build</text>
+
+  <!-- 6 Model -->
+  <rect class="row-ai" x="52" y="384" width="1212" height="52" rx="8"/>
+  <rect class="l6" x="60" y="392" width="182" height="36" rx="6"/><text class="num t6" x="72" y="415">6</text><text class="pill-t t6" x="98" y="415">Model</text>
+  <text class="d" x="262" y="415">Infers a taste profile, scores tracks, reads "Too slow" as over 85 bpm</text>
+  <rect class="c-rec" x="880" y="396" width="140" height="28" rx="14"/><text class="ct t-rec" x="950" y="415">Recommender</text>
+  <rect class="c-prop" x="1034" y="396" width="100" height="28" rx="14"/><text class="ct t-prop" x="1084" y="415">Property 2</text>
+  <rect class="c-plan" x="1142" y="396" width="114" height="28" rx="14"/><text class="ct t-muted" x="1199" y="415">free text</text>
+
+  <!-- 7 Planning -->
+  <rect class="row-ai" x="52" y="444" width="1212" height="52" rx="8"/>
+  <rect class="l7" x="60" y="452" width="182" height="36" rx="6"/><text class="num t7" x="72" y="475">7</text><text class="pill-t t7" x="98" y="475">Planning / decision</text>
+  <text class="d" x="262" y="475">Fills Up next with the best tracks; swaps any that clash for higher scorers</text>
+  <rect class="c-rec" x="880" y="456" width="140" height="28" rx="14"/><text class="ct t-rec" x="950" y="475">Recommender</text>
+  <rect class="c-inf" x="1034" y="456" width="100" height="28" rx="14"/><text class="ct t-inf" x="1084" y="475">inference</text>
+
+  <!-- 8 Tools / action -->
+  <rect class="row" x="52" y="504" width="1212" height="52" rx="8"/>
+  <rect class="l8" x="60" y="512" width="182" height="36" rx="6"/><text class="num t8" x="72" y="535">8</text><text class="pill-t t8" x="98" y="535">Tools / action</text>
+  <text class="d" x="262" y="535">Plays the track, shown with a "Because you listen to …" explanation</text>
+  <rect class="c-play" x="880" y="516" width="140" height="28" rx="14"/><text class="ct t-play" x="950" y="535">Playback + UI</text>
+  <rect class="c-prop" x="1034" y="516" width="100" height="28" rx="14"/><text class="ct t-prop" x="1084" y="535">Property 3</text>
+  <rect class="c-sim" x="1142" y="516" width="114" height="28" rx="14"/><text class="ct t-muted" x="1199" y="535">fake engine</text>
+
+  <!-- 9 Environment -->
+  <rect class="row" x="52" y="564" width="1212" height="52" rx="8"/>
+  <rect class="l9" x="60" y="572" width="182" height="36" rx="6"/><text class="num t9" x="72" y="595">9</text><text class="pill-t t9" x="98" y="595">Environment</text>
+  <text class="d" x="262" y="595">The listener's Spotify device, now playing the chosen track</text>
+  <rect class="c-ext" x="880" y="576" width="140" height="28" rx="14"/><text class="ct t-ext" x="950" y="595">Spotify</text>
+
+  <!-- 10 Feedback -->
+  <rect class="row" x="52" y="624" width="1212" height="52" rx="8"/>
+  <rect class="l10" x="60" y="632" width="182" height="36" rx="6"/><text class="num t10" x="72" y="655">10</text><text class="pill-t t10" x="98" y="655">Feedback</text>
+  <text class="d" x="262" y="655">Rejecting with a reason, skipping, or undoing a reason</text>
+  <rect class="c-ui" x="880" y="636" width="140" height="28" rx="14"/><text class="ct t-ui" x="950" y="655">Interface</text>
+  <rect class="c-prop" x="1034" y="636" width="100" height="28" rx="14"/><text class="ct t-prop" x="1084" y="655">Property 4</text>
+  <rect class="c-note" x="1142" y="636" width="114" height="28" rx="14"/><text class="ct t-note" x="1199" y="655">short loop</text>
+
+  <!-- 11 Adaptation -->
+  <rect class="row-ai" x="52" y="684" width="1212" height="52" rx="8"/>
+  <rect class="l11" x="60" y="692" width="182" height="36" rx="6"/><text class="num t11" x="72" y="715">11</text><text class="pill-t t11" x="98" y="715">Adaptation</text>
+  <text class="d" x="262" y="715">Reasons re-weight later picks; the taste profile itself stays fixed</text>
+  <rect class="c-rec" x="880" y="696" width="140" height="28" rx="14"/><text class="ct t-rec" x="950" y="715">Recommender</text>
+  <rect class="c-inf" x="1034" y="696" width="100" height="28" rx="14"/><text class="ct t-inf" x="1084" y="715">inference</text>
+  <rect class="c-note" x="1142" y="696" width="114" height="28" rx="14"/><text class="ct t-note" x="1199" y="715">long loop</text>
+
+  <!-- Loop: adaptation back to the human -->
+  <path class="loop" d="M52 710 H30 V110 H50" marker-end="url(#ah)"/>
+  <text class="loop-t" transform="translate(22 410) rotate(-90)" text-anchor="middle">the next track, and the next reason</text>
+</svg>
+    </div>
+    <figcaption>All four required properties are present, so the prototype counts as an intelligent interactive system. Inference sits in the model, planning and adaptation layers, which is where its hardest problem lives: a reason like "Too slow" is subjective, so its threshold can be wrong, and the listener can undo it. Every layer is filled, but the long loop is short: reasons last one session, and only blocked artists persist between visits. The fake engine is a simulated stand-in for Spotify, and interpreting typed reasons is planned.</figcaption>
+  </figure>
+</main>
