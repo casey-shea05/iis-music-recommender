@@ -9,7 +9,7 @@ The always-present panel in the expanded player where the user picks reasons for
 _Avoid_: reason prompt, dislike dialog
 
 **Dislikes panel**
-A tab beside the Reason panel in the expanded player, listing every Dislike of this session with its reasons, under a summary of the current effects. Removing a Dislike there drops all its reasons and lets the track come up again, but never unblocks an artist. It is disabled while there are no Dislikes.
+A tab beside the Reason panel in the expanded player, listing the Dislikes of this session with their reasons, under a summary of the current effects. A Dislike whose only reason is "Not a fan of this artist" is listed in the Blocked artists panel instead. Removing a Dislike there drops all its reasons and lets the track come up again, but never unblocks an artist: if it still carries the artist reason, the track stays hidden until the artist is unblocked. It is disabled while there are no Dislikes, unless it is already open: then it stays open, empty, until the user leaves it.
 _Avoid_: reasons panel, history
 
 **Blocked artists panel**
