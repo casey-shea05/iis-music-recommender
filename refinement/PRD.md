@@ -29,16 +29,16 @@ Two light user types, split by musical sophistication; the listening goal varies
 | **Needs** | Quick preset reasons (chips) | Their own wording when no preset fits (free text) |
 | **Risk** | Skips without explaining if it takes effort | Gets frustrated if the system flattens their reason |
 
-Free text is available to everyone when no chip fits; engaged listeners are just the most likely to need it.
+Free text is available to everyone when no chip fits; engaged listeners are just the most likely to need it. Interpreting it was deferred (R8), so the prototype serves casual explorers best.
 
 ### Scenarios
 
 Each scenario becomes one storyboard.
 
 - **Steering with a chip (normal path).** A casual explorer is on a discovery playlist. A track comes up with "picked because you like \[artist\]". It's too slow for right now, so they dislike it and tap "Too slow". The next few tracks pick up the pace, and they can see their reason was used.
-- **When no chip fits (free text).** An engaged listener has a specific goal. They like the artist but not their live recordings, which no chip covers, so they type it. The system applies it straight away and shows how it understood it, so they can correct it if needed. *Not demonstrable until free-text interpretation is built (R8).*
-- **The system gets it wrong (failure and recovery).** A user stacks several reasons ("Too slow", then "Too intense", then "Too gloomy"). Few tracks fit all of them, so Up next fills with compromises tagged "Closest fit". The user sees the tags, opens the Dislikes panel, sees which effects are pulling against each other and removes one. Up next recovers.
-  - **S3b (parked until free text is built):** a typed reason is misread ("heard this too much" treated as disliking the genre), and the user sees the interpretation and corrects or removes it.
+- **When no chip fits (free text).** An engaged listener has a specific goal. They like the artist but not their live recordings, which no chip covers, so they type it. The system applies it straight away and shows how it understood it, so they can correct it if needed. *Not in the prototype: interpreting free text (R8) was deferred on 25 Nov to fit the build time.*
+- **The system gets it wrong (failure and recovery).** A user stacks several reasons ("Too slow", then "Too intense", then "Too gloomy"). Few tracks fit all of them, so Up next fills with compromises. The user opens the Dislikes panel, sees in its summary which effects are steering at once and removes a dislike. Up next recovers.
+  - **S3b (deferred with free text, R8):** a typed reason is misread ("heard this too much" treated as disliking the genre), and the user sees the interpretation and corrects or removes it.
 
 ## Scope and requirements
 
@@ -47,7 +47,7 @@ The prototype covers one discovery session, where users steer what comes next by
 ### Scope
 
 - **Setting:** music discovery and attentive listening.
-- **Steering:** through reasons given when rejecting individual tracks, using chips plus free text.
+- **Steering:** through reasons given when rejecting individual tracks, using chips. Free text can be typed and is listed, but doesn't steer yet (R8).
 - **Profile:** may be shown, but not edited directly.
 
 ### Non-goals
@@ -70,14 +70,14 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R4 | The expanded player always shows a reason panel for the track playing, and the minimized bar has a Dislike button that opens the expanded player. Submitting the panel records a dislike: the track is removed from the queue and Heard, and the next one plays | Wrong, S1 | Must | Implement |
 | R5 | The reason panel shows one pair of chips per feature (tempo, intensity, mood and acoustic, e.g. Too slow / Too fast), a Not a fan of this artist chip and a free-text box; picking one side of a pair deselects the other, and chips can be combined. Nothing is recorded until Submit | Missing, S1, S2 | Must | Implement |
 | R6 | Submitting with nothing picked is a dislike with no reason: it only removes the track, and no reason is inferred. The panel resets whenever the track playing changes | Wrong | Must | Implement |
-| R7 | Tempo, intensity, mood, acoustic and free text apply for this session only; Not a fan of this artist applies long-term | Wrong, S1 | Must | Implement |
-| R8 | Free text is interpreted and applied straight away. Until then, typed reasons are saved and listed but don't steer | S2 | Should | Implement after core build (existing model) |
-| R9 | Reasons lower the ranking of conflicting tracks rather than filtering them out (only Not a fan of this artist excludes). After a reason, unheard tracks in Up next that conflict with it are swapped for higher-scoring ones, and a replacement that still conflicts is tagged "Closest fit". The latest reason on a feature wins, and different features combine | Matters, S1, S3 | Must | Implement |
-| R10 | The Dislikes panel opens with a summary of the merged effects steering the session (changed 25 Nov: a separate Active reasons strip overlapped the explanation line, so the summary moved into the panel) | Matters, S1 | Must | Implement |
-| R11 | A Dislikes panel, a tab beside the Reason panel in the expanded player (disabled while there are no dislikes), lists each disliked track with the reasons given on it, split into this session and long-term. Removing a disliked track removes all its reasons and lets the track come up again; the panel says so. Reasons can't be removed one at a time | Matters, S3 | Must | Implement |
+| R7 | Dislikes and their tempo, intensity, mood, acoustic and free-text reasons last this session only. Not a fan of this artist blocks the track's primary artist long-term, as its own list of Blocked artists (changed 25 Nov) | Wrong, S1 | Must | Implement |
+| R8 | Free text is interpreted and applied straight away. For now, typed reasons are saved and listed but don't steer (deferred 25 Nov) | S2 | Won't (yet) | Plan (existing model) |
+| R9 | Reasons lower the ranking of conflicting tracks rather than filtering them out (only Not a fan of this artist excludes). After a reason, unheard tracks in Up next that conflict with it are swapped for higher-scoring ones; when nothing better is available, a replacement can still conflict (a Closest fit). The latest reason on a feature wins, and different features combine | Matters, S1, S3 | Must | Implement |
+| R10 | The Dislikes panel opens with a summary of the merged effects steering this session; blocked artists are listed in their own tab instead (changed 25 Nov: a separate Active reasons strip overlapped the explanation line, so the summary moved into the panel) | Matters, S1 | Must | Implement |
+| R11 | Two tabs beside the Reason panel in the expanded player, each disabled while empty. The Dislikes panel lists each track disliked this session with the reasons given on it; a dislike whose only reason is Not a fan of this artist is listed under its artist instead. The Blocked artists panel lists each blocked artist once, with the tracks that blocked them and an Unblock button. Removing a disliked track removes all its reasons and lets the track come up again, but never unblocks an artist; the panel says so. Reasons can't be removed one at a time | Matters, S3 | Must | Implement |
 | R12 | Tracks in Heard can be disliked later, the same way as the track playing | Wrong | Won't (yet) | Plan |
 | R13 | Start new queue resets all session effects | S1 | Must | Implement |
-| R14 | A brief toast after Submit, showing how the reasons were understood. For free text, the interpretation comes with R8; until then it says typed reasons are saved but don't steer | Matters, S2 | Must (chips) / Should (free text) | Implement; the free-text part comes with R8 |
+| R14 | A brief toast after Submit, showing how the chips were understood. Typed reasons get a note that they are saved but don't steer yet; showing how they were interpreted comes with R8 | Matters, S2 | Must (chips) / Won't (yet) (free text) | Implement; the free-text part comes with R8 |
 | R15 | A reason can be corrected in the user's own words and re-interpreted | S3b | Won't (yet) | Plan |
 | R16 | Tracks can be liked and saved to a liked playlist; a like doesn't steer | Situation | Won't (yet) | Plan |
 | R17 | Each dislike is logged with its reasons and how they were interpreted | Matters | Won't (yet) | Plan |
@@ -87,20 +87,30 @@ Traces to the problem-statement parts (Situation, Missing, Wrong, Matters) or th
 | R21 | Rejecting upcoming tracks before they play | Wrong | Won't (yet) | Plan |
 | R22 | Likes and repeated reasons feed the long-term profile, using the reason log | Matters | Won't (yet) | Plan |
 | R23 | Follow-up chips for mood and genre | Missing | Won't (yet) | Plan |
-| R24 | A disliked track can be set back to neutral: removing it in the Dislikes panel drops all its reasons and returns it to the pool of tracks that can come up again. A dislike with no reason is listed too (moved from Won't to Must on 25 Nov) | S3 | Must | Implement |
+| R24 | A disliked track can be set back to neutral: removing it in the Dislikes panel drops all its reasons and returns it to the pool of tracks that can come up again. A dislike with no reason is listed too. A blocked artist is lifted separately, with Unblock in the Blocked artists panel (moved from Won't to Must on 25 Nov) | S3 | Must | Implement |
+| R25 | A replacement in Up next that still conflicts is tagged "Closest fit" (split from R9 on 25 Nov) | Matters, S3 | Won't (yet) | Plan |
 
-R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, playback and stack decisions are in [ADR 0001](../docs/adr/0001-technical-spike.md): the taste profile comes from Spotify top tracks and artists, features and candidate tracks come from ReccoBeats.
+R12 and R15–R18 were moved to Planned on 23 Nov to fit the build time. Data, playback and stack decisions are in [ADR 0001](../docs/adr/0001-technical-spike.md) and [ADR 0002](../docs/adr/0002-catalogue-source.md): the taste profile comes from Spotify top tracks and artists, candidate tracks come from Last.fm similar artists, and features come from ReccoBeats.
+
+**Changes after the build (25 Nov):**
+
+- **Blocked artists became their own long-term list, and dislikes became session-only** (R7, R10, R11, R24). Keeping both in one list meant removing a dislike could silently unblock an artist, and long-term dislikes mixed with session ones in the same panel. Now removing a dislike never unblocks; only Unblock does.
+- **Free text (R8, and the free-text parts of R14 and S3b) moved to Won't (yet)** to fit the build time. The text box stays, so the design can be shown, but typed reasons don't steer.
+- **The Closest fit tag moved from R9 to its own Won't (yet) requirement (R25)** to fit the build time. Swapping still works; the user sees over-steering through the effects summary in the Dislikes panel rather than on each track.
+- **Success criterion 1 no longer asks swapped tracks to show the reason that brought them in**, because that is R18, which was already Won't (yet).
+- **The catalogue now comes from Last.fm similar artists**, because ReccoBeats recommendations were far from the user's taste ([ADR 0002](../docs/adr/0002-catalogue-source.md)).
 
 ### Known limitations
 
-- Moods beyond happy/sad (valence) still need free text.
+- Moods beyond happy/sad (valence) would need free text.
 - Session-only effects only partly address later recommendations missing.
 - The merged effects are shown only inside the Dislikes panel, one tap away, not in an always-visible strip.
+- Compromise tracks aren't tagged Closest fit (R25), so the user has to notice over-steering from the tracks and the effects summary.
 - "Not a fan of this artist" blocks only a track's primary (first-listed) artist, so a collaboration can block a featured artist the user never judged.
-- The catalogue is a small snapshot (hundreds to a few thousand tracks), so stacked reasons run into Closest fit sooner than they would in a full catalogue.
+- The catalogue is a small snapshot (hundreds to a few thousand tracks), so stacked reasons run out of fitting tracks sooner than they would in a full catalogue.
 - Track features are ReccoBeats' estimates, not Spotify's own values.
-- Long-term reasons and likes are stored in one browser only (no accounts or server).
-- Until R8 is built, typed reasons are saved but don't steer.
+- Blocked artists are stored in one browser only (no accounts or server). Blocks saved before the 25 Nov change were not carried over (this only affected the developer's own browser).
+- Free text is deferred (R8): typed reasons are saved and listed for the session but don't steer, so scenario S2 can't be demonstrated.
 - Tested by the developer only, so perceived control isn't measured.
 - Without a Spotify Premium login, or if Spotify's player can't connect, the app runs on a fake player: the queue, seek bar and skipping work, but no audio plays and no artwork is shown.
 
@@ -123,10 +133,10 @@ Decisions built with QOC. Criteria are concepts from the IIS Week 1–4 lectures
 | Which side of a feature do the chips offer? | Only the side the track sits on, judged against the profile / **both sides of each feature as a pair** | The system can't know which way a track felt wrong, and "slow" is subjective, so a wrong guess would hide the chip the user wanted (interprets under uncertainty, W1 L2); showing both sides lets people pick instead of recall (recognition over recall, W2 L5) | R5 |
 | How is typed feedback applied? | Confirm first / **apply now, show how it was read, allow fixing** / keyword match | Low stakes and undoable, so do it and show it (do, confirm or never, W4 L12); showing the reading lets a misread be caught (grounding by display, W3 L7) | R8, R14, R15 |
 | How far does a reason reach? | All long-term / all session / **split: tempo, intensity, mood, acoustic and free text for this session; artist long-term** | "Too slow" is about the moment, not taste, and making it permanent causes the borrowed-afternoon problem (Amershi et al. "update cautiously", cited in W1 L3); old moods turn into stale memory (W4 L10) | R7, R13, R22 |
-| How is the effect made visible? | Silent re-rank / regenerate the whole queue / **swap only conflicting unheard tracks, tag them, summarise the effects in the Dislikes panel** | A change with no visible cause breaks "I did that" (thermostat problem, W2 L6); tell users about changes (Amershi et al., cited in W1 L3); order shapes what gets heard, so only conflicting tracks move (ranking is never neutral, W2 L6) | R9, R10, R18 |
+| How is the effect made visible? | Silent re-rank / regenerate the whole queue / **swap only conflicting unheard tracks and summarise the effects in the Dislikes panel** (tagging the tracks is planned, R18 and R25) | A change with no visible cause breaks "I did that" (thermostat problem, W2 L6); tell users about changes (Amershi et al., cited in W1 L3); order shapes what gets heard, so only conflicting tracks move (ranking is never neutral, W2 L6) | R9, R10, R18, R25 |
 | How much does each track explain, and how many are shown? | No explanation / full feature breakdown / **artist anchor + 1–2 features; Up next 3–5 tracks** | Enough to judge and steer, not everything (explanation dosage, Kulesza et al., cited in W2 L5); a recommendation is a claim, so its reason is shown, and with scoring the reason is how the track was ranked (W4 L11); fewer, best first (W4 L11) | R1, R2 |
-| How do users inspect and undo? | Direct profile editing / no control / **Dislikes panel with removal and correction** | Reasons are the only input, so removing one undoes its effect without editing the profile (inspectable, editable, forgettable, W4 L10); covers both slips and misreads (slips vs mistakes, W2 L6); adds control without reducing automation (W1 L3). Full profile view left out of the prototype: the Dislikes panel already shows session and long-term reasons; a full view belongs in a fuller system | R11, R15, R19, R24 |
-| Does a reason filter or steer? | Hard filter (exclude conflicting tracks) / **soft critique: conflicts lower the score, only an artist veto excludes, and compromises are tagged Closest fit** | A filter can empty the queue, which turns a recommender into a search filter; treating critiques as soft preferences combines how well a track meets them with how similar it is (incremental critiquing, Llorente & Escalera 2011; Chen & Pu 2011); steering through audio features follows Millecamp et al. 2018; tagging compromises keeps the change visible (thermostat problem, W2 L6). **TODO:** link to a lecture concept | R9, R11 |
+| How do users inspect and undo? | Direct profile editing / no control / **Dislikes and Blocked artists panels with removal** (correction comes with free text, R15) | Reasons are the only input, so removing one undoes its effect without editing the profile (inspectable, editable, forgettable, W4 L10); covers both slips and misreads (slips vs mistakes, W2 L6); adds control without reducing automation (W1 L3). Full profile view left out of the prototype: the Dislikes panel shows what is steering this session and the Blocked artists panel shows the long-term blocks; a full view belongs in a fuller system | R11, R15, R19, R24 |
+| Does a reason filter or steer? | Hard filter (exclude conflicting tracks) / **soft critique: conflicts lower the score, and only an artist veto excludes** | A filter can empty the queue, which turns a recommender into a search filter; treating critiques as soft preferences combines how well a track meets them with how similar it is (incremental critiquing, Llorente & Escalera 2011; Chen & Pu 2011); steering through audio features follows Millecamp et al. 2018; tagging compromises Closest fit (R25) would keep the trade-off visible on each track (thermostat problem, W2 L6). **TODO:** link to a lecture concept | R9, R11, R25 |
 | Where does the intelligence sit? | Trained model / LLM recommends / **scoring, plus an LLM that only translates typed reasons** | No training data and a short build (simplest system that solves the task, W1 L2); keeps inference to a few known points (where inference sits, W1 L2); the LLM proposes an adjustment from a fixed set and code checks it (schema: shape, not truth, W3 L9; the model only proposes, W4 L12) | R1, R8 |
 
 ## Success criteria and open questions
@@ -135,16 +145,16 @@ The prototype succeeds if steering visibly works, takes little effort and recove
 
 | Criterion | Traces to | How checked |
 | --- | --- | --- |
-| **Steering works:** after a reason, most swapped tracks in Up next fit it, and each shows the reason that brought it in | Matters, S1 | Trace, then manual test |
+| **Steering works:** after a reason, most swapped tracks in Up next fit it | Matters, S1 | Trace, then manual test |
 | **Giving a reason is low effort:** in the expanded player, a chip reason takes at most 2 taps (a chip, then Submit) and a dislike with no reason takes 1 (Submit) | Wrong, S1 | Manual walkthrough |
-| **Typed reasons are understood** (only once R8 is built): at least 8 of 10 prepared phrasings map to the intended adjustment, across 2–3 runs | S2 | Automated test set |
-| **Over-steering can be recovered:** after stacked reasons push Up next into Closest fit, removing a dislike in the Dislikes panel brings fitting tracks back | S3 | Manual test |
+| **Typed reasons are understood** (deferred with R8, not checked in the prototype): at least 8 of 10 prepared phrasings map to the intended adjustment, across 2–3 runs | S2 | Automated test set |
+| **Over-steering can be recovered:** after stacked reasons leave Up next with tracks that still conflict, removing a dislike in the Dislikes panel brings fitting tracks back | S3 | Manual test |
 
 ### Open questions
 
-- [x] Should the taste profile be shown, and how much of it? Showing it may be needed so users can see their reasons changing what comes next. The Dislikes panel already shows long-term reasons, and a full profile view is a Could. **TODO:** decide during interaction design; possible rationale table row.
+- [x] Should the taste profile be shown, and how much of it? Showing it may be needed so users can see their reasons changing what comes next. The Blocked artists panel already shows the long-term blocks, and a full profile view is a Could. **TODO:** decide during interaction design; possible rationale table row.
 
-  Decided: not in the prototype; see rationale row 7.
+  Decided: not in the prototype; see the rationale row "How do users inspect and undo?".
 
 ---
 

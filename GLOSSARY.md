@@ -21,7 +21,7 @@ The record of a track the user rejected, with any reasons given on it (none is a
 _Avoid_: thumbs-down, ban
 
 **Adjustment**
-What a reason is interpreted into: a direction on one feature (e.g. tempo up) or a block on an artist. Its scope follows the kind of reason: blocking an artist is long-term, everything else lasts this session. One reason can produce several adjustments.
+What a feature reason is interpreted into: a direction on one feature (e.g. tempo up), measured from the disliked track. Adjustments last this session. The "Not a fan of this artist" reason creates a Blocked artist instead, and typed reasons don't create adjustments yet. One Dislike can produce several adjustments.
 _Avoid_: rule, filter, preference
 
 **Effect**
@@ -33,7 +33,7 @@ A track goes against an effect when its feature sits on the wrong side of it (e.
 _Avoid_: violation, mismatch
 
 **Closest fit**
-An unheard Up next track that still conflicts with an effect, because nothing better was available. It is always tagged so the user can see the compromise. The tag follows the current effects: removing an effect clears it from tracks that no longer conflict.
+An unheard Up next track that still conflicts with an effect, because nothing better was available. It follows the current effects: removing an effect means tracks that no longer conflict stop being Closest fits. Tagging them in Up next is planned, not built.
 _Avoid_: fallback, no match
 
 **Blocked artist**

@@ -12,6 +12,8 @@ The PRD says what the prototype does but not how. Building time is about a day a
 
 ### 1. Data: Spotify + ReccoBeats, fetched once into a snapshot
 
+*Step 2 below is superseded by [ADR 0002](0002-catalogue-source.md): Last.fm similar artists now choose the candidate tracks, and ReccoBeats only supplies features.*
+
 | Option | Verdict |
 | --- | --- |
 | Spotify only | No audio features or recommendations for new apps |
@@ -57,7 +59,7 @@ Layout (amended 2026-11-24, IIS-56):
 - `src/app/`: the single page. Every component gets its own `Name/Name.tsx` folder, and a component's children sit in its own `components/` subfolder. A component lives in the `components/` folder of the closest parent that uses it.
 - `src/shadcn/`: vendored shadcn/ui building blocks and their `cn()` helper, kept flat as the CLI generates them (`components.json` points here).
 - `src/hooks/`: hooks shared across components, such as `PlaybackProvider` and `usePlayback()`. A hook used by one component sits in that component's folder.
-- `src/recommender/`: pure TypeScript logic (catalogue, queue, and later reasons and scoring), no React and no Spotify.
+- `src/recommender/`: pure TypeScript logic (catalogue, queue, scoring, dislikes and swapping), no React and no Spotify.
 - `src/playback/`: the `Player` interface, the fake engine and engine selection. `src/playback/spotify/` holds all Spotify code (PKCE, browser auth, the SDK engine). Only engine selection in `src/playback/` and the catalogue script in `scripts/` import from it; the rest of the app sees the `Player` interface.
 - `src/utils/`: small shared helpers such as formatting.
 
@@ -65,7 +67,7 @@ File names: components are PascalCase, other modules are camelCase, and generate
 
 ### 5. Free text: accepted but not acted on for now
 
-The text box saves the reason so it shows in the Dislikes panel, but it doesn't steer. Interpreting free text (R8, R14) comes after the core build: `claude-haiku-5-5` with structured output limited to the fixed set of adjustments, a Console API key in `.env`, and a keyword fallback when no key is set. A Claude subscription doesn't include API access.
+The text box saves the reason so it shows in the Dislikes panel, but it doesn't steer. Interpreting free text (R8, R14) was planned for after the core build, and on 2026-11-25 it was deferred past the prototype to fit the build time (IIS-30). The plan, if it is built: `claude-haiku-5-5` with structured output limited to the fixed set of adjustments, a Console API key in `.env`, and a keyword fallback when no key is set. A Claude subscription doesn't include API access.
 
 ### 6. Reasons are soft critiques, not filters
 
@@ -74,14 +76,14 @@ Chips: both sides of tempo, intensity (energy), mood (valence) and acoustic (aco
 - A chip creates an adjustment with a **threshold taken from the disliked track** (e.g. "Too slow" on an 85 bpm track means "faster than 85 bpm"). The latest reason on a feature replaces the earlier one; different features combine.
 - **Score** = similarity to the profile + a top-artist bonus − a penalty for each conflict, growing with how far the track sits on the wrong side.
 - Only *Not a fan of this artist* is a hard exclusion.
-- After a reason, an unheard Up next track that conflicts is swapped only for a higher-scoring candidate. A replacement that still conflicts is tagged **Closest fit**.
+- After a reason, an unheard Up next track that conflicts is swapped only for a higher-scoring candidate. A replacement that still conflicts is a **Closest fit**. Tagging it in Up next was cut on 2026-11-25 to fit the build time (IIS-77).
 - **Explanation**: the anchor artist (the top artist the track was recommended from) plus the one or two features closest to the profile.
 
 A hard filter was rejected because stacked reasons can empty a small catalogue, and it would make the recommender behave like a search filter. Treating critiques as soft preferences follows incremental critiquing (see Llorente & Escalera 2011; Chen & Pu 2011). Steering with audio features follows Millecamp et al. 2018. Weakening older reasons over time is left as an idea for a fuller system.
 
 ### 7. State: in memory and localStorage, no database
 
-Session effects live in memory, so a reload or Start new queue begins a new session. Long-term artist blocks and liked tracks are saved in `localStorage`, which means they only exist in that one browser.
+Dislikes and their effects live in memory, so a reload or Start new queue begins a new session. Blocked artists are a separate long-term list saved in `localStorage`, which means they only exist in that one browser (amended 2026-11-25, IIS-31: before, the dislikes carrying the artist reason were saved instead). Liked tracks (R16) aren't built.
 
 ## Consequences
 
