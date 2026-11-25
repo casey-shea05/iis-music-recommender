@@ -4,7 +4,7 @@ import { TrackRow } from '../../../TrackRow/TrackRow.tsx'
 const SHOWN = 5
 
 /** The first few tracks after Now playing. */
-export function UpNextList({ tracks, onSelect }: { tracks: CatalogueTrack[]; onSelect: (track: CatalogueTrack) => void }) {
+export function UpNextList({ tracks, onSelect }: { tracks: readonly CatalogueTrack[]; onSelect: (track: CatalogueTrack) => void }) {
   return (
     <section aria-labelledby="up-next-heading">
       <h2 id="up-next-heading" className="mb-2 text-sm font-semibold">

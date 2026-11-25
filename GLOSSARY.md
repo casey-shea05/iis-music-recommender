@@ -25,7 +25,7 @@ One run of the discovery queue, from Start new queue (or opening the app) until 
 _Avoid_: playlist, run
 
 **Queue**
-The one ordered list of tracks in a session, with a cursor on the track Now playing. Everything before the cursor is Heard; everything after it is Up next. Replaying a Heard track moves the cursor back; it does not remove anything.
+The one ordered list of tracks in a session, with a cursor on the track Now playing. Everything after the cursor is Up next. Moving the cursor back (replaying a Heard track) removes nothing: the tracks after it stay in Up next.
 _Avoid_: track list, playlist
 
 **Now playing**
@@ -37,8 +37,16 @@ The tracks after the cursor, waiting to be played.
 _Avoid_: upcoming, backlog
 
 **Heard**
-The tracks before the cursor: already played in this session.
+The record of tracks already played in this session. It only grows until the session ends: moving the cursor back to a Heard track doesn't remove anything from it, so a track can be both Heard and Up next.
 _Avoid_: history, played
+
+**Fresh track**
+A catalogue track that isn't in this session's queue yet. When Up next runs short, fresh tracks are added to the end of the queue.
+_Avoid_: new track, unheard track
+
+**Start new queue**
+The action that ends the current session and begins another: Heard is emptied and the queue starts again from its first track. Session-scoped adjustments end with it; long-term ones carry over.
+_Avoid_: reset, refresh
 
 **Anchor artist**
 The artist an explanation cites as the reason a track was picked: one of the user's top artists whose music led to the recommendation.

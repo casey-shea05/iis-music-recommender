@@ -101,7 +101,8 @@ describe('usePlayback', () => {
 
   it('plays the last track again from the start when Play is pressed after it ended', async () => {
     const { result } = await connected()
-    act(() => result.current.playAt(2))
+    act(() => result.current.next())
+    act(() => result.current.next())
     await act(() => vi.advanceTimersByTimeAsync(2000))
     expect(result.current.playing).toBe(false)
 
@@ -157,5 +158,33 @@ describe('usePlayback', () => {
     act(() => result.current.togglePlay())
     act(() => result.current.seek(1500))
     expect(result.current.positionMs).toBe(1500)
+  })
+})
+
+describe('session: Heard and Start new queue', () => {
+  it('Next records the track left as Heard and keeps Up next topped up', async () => {
+    const { result } = await connected()
+    act(() => result.current.togglePlay())
+    act(() => result.current.next())
+    expect(result.current.nowPlaying?.id).toBe('b')
+    expect(result.current.heard.map((t) => t.id)).toEqual(['a'])
+    // Replaying a Heard track doesn't duplicate it.
+    act(() => result.current.playTrack(tracks[0]))
+    act(() => result.current.next())
+    expect(result.current.heard.map((t) => t.id)).toEqual(['a', 'b'])
+  })
+
+  it('Start new queue empties Heard and restarts track 1 even while it is playing', async () => {
+    const { result, player } = await connected()
+    act(() => result.current.togglePlay())
+    act(() => result.current.next())
+    const play = vi.spyOn(player, 'play')
+    act(() => result.current.startNewQueue())
+    expect(result.current.heard).toEqual([])
+    expect(result.current.nowPlaying?.id).toBe('a')
+    expect(play).toHaveBeenCalledWith('a')
+    play.mockClear()
+    act(() => result.current.startNewQueue())
+    expect(play).toHaveBeenCalledWith('a')
   })
 })
