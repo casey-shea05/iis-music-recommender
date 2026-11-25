@@ -40,9 +40,6 @@ function PanelBody({ track, onSubmit }: Props) {
     })
     if (artist) reasons.push({ kind: 'artist' })
     onSubmit(reasons, text)
-    setPicked({})
-    setArtist(false)
-    setText('')
   }
 
   return (
