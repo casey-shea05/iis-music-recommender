@@ -2,6 +2,7 @@
 discovery/research-papers
 # Personal data and secrets
 data/catalogue.json
+data/catalogue-cache.json
 .env
 
 # Build and tooling

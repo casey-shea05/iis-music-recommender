@@ -10,18 +10,48 @@ export type SpotifyTrack = {
   isrc?: string
 }
 
-/** A track returned by ReccoBeats' title search. `id` is the Spotify ID ReccoBeats knows it by. */
-export type ReccoCandidate = {
+/** A search result (Spotify or ReccoBeats) that might be the track we want. `id` is its Spotify track ID. */
+export type TrackCandidate = {
   id: string
   title: string
-  artists: { name: string }[]
+  /** `id` is the Spotify artist ID, when the source gives one. */
+  artists: { id?: string; name: string }[]
   isrc?: string
 }
 
+/** Tracks Last.fm picked as similar to one of the user's top artists. */
 export type Recommendation = {
-  /** The top track whose Spotify ID seeded this ReccoBeats request. */
-  seedTrackId: string
+  /** The top artist the similar artists were found from. */
+  anchorArtistId: string
   tracks: SpotifyTrack[]
+}
+
+/** An entry from Last.fm's `artist.getSimilar`. `match` arrives as a string such as "0.87". */
+export type SimilarArtist = { name: string; match: string | number }
+
+/** The closest similar artists: at least `minMatch`, best first, at most `limit`. */
+export function pickSimilarArtists(
+  similar: SimilarArtist[],
+  { limit, minMatch }: { limit: number; minMatch: number },
+): string[] {
+  return similar
+    .map((a) => ({ name: a.name, match: Number(a.match) }))
+    .filter((a) => a.match >= minMatch)
+    .sort((a, b) => b.match - a.match)
+    .slice(0, limit)
+    .map((a) => a.name)
+}
+
+/**
+ * Last.fm often credits several artists as one name ("Jessie J, Ariana Grande & Nicki Minaj"), where Spotify
+ * lists them separately. Returns the full name first (some acts have "&" in their name), then each part.
+ */
+export function splitArtistNames(credit: string): string[] {
+  const parts = credit
+    .split(/\s*,\s*|\s+&\s+|\s+(?:feat|ft)\.\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  return parts.length > 1 ? [credit, ...parts] : [credit]
 }
 
 export function spotifyIdFromHref(href: string): string | undefined {
@@ -31,20 +61,22 @@ export function spotifyIdFromHref(href: string): string | undefined {
 // Unicode-aware, so non-Latin titles and artists (K-pop, J-pop, ...) don't collapse to an empty string.
 const normalise = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 
-// Drops "(feat. X)" and " - Remastered 2020" style suffixes before comparing titles. A suffix is only
+// Drops "(feat. X)", "ft. X" and " - Remastered 2020" style suffixes before comparing titles. A suffix is only
 // dropped if something is left, and " - Part 2" style subtitles are kept because they change the song.
 const normaliseTitle = (title: string) => {
   const stripped = title
     .replace(/\s*[([].*$/, '')
+    .replace(/\s+(?:feat|ft)\.\s.*$/i, '')
     .replace(/\s+-\s+(?:.*\b(?:remaster(?:ed)?|version|mix|edit|mono|stereo|live|deluxe|bonus|single|radio|slowed|sped)\b.*|\d{4}.*)$/i, '')
   return normalise(normalise(stripped) ? stripped : title)
 }
 
 /**
- * Spotify can give the same recording several IDs (album, single, re-release) and ReccoBeats
- * only knows one. Find it by ISRC first, then by title and artist name.
+ * The candidate that is this track: by ISRC first, then by title and artist name. Used to pick the right
+ * Spotify search result for a Last.fm track, and the ID ReccoBeats knows a recording by (Spotify can give
+ * the same recording several IDs: album, single, re-release).
  */
-export function matchReccoTrack(track: SpotifyTrack, candidates: ReccoCandidate[]): string | undefined {
+export function matchTrack(track: SpotifyTrack, candidates: TrackCandidate[]): string | undefined {
   const byIsrc = track.isrc && candidates.find((c) => c.isrc === track.isrc)
   if (byIsrc) return byIsrc.id
 
@@ -78,14 +110,20 @@ export function buildCatalogue(input: {
   const { topTracks, topArtists, recommendations, features, images = {}, generatedAt } = input
   const topArtistIds = new Set(topArtists.map((a) => a.id))
 
-  // The anchor artist is the top artist behind the seed track, else the seed's own first artist.
-  const anchorFor = (seed: SpotifyTrack) =>
-    (seed.artists.find((a) => topArtistIds.has(a.id)) ?? seed.artists[0])?.id
+  // A top track's anchor artist is its top artist, else its own first artist.
+  const anchorFor = (top: SpotifyTrack) =>
+    (top.artists.find((a) => topArtistIds.has(a.id)) ?? top.artists[0])?.id
 
   const tracks = new Map<string, CatalogueTrack>()
+  // Spotify gives one recording several IDs (album, single, deluxe), so a recording is also known by its ISRC.
+  const isrcs = new Set<string>()
   const add = (track: SpotifyTrack, anchorArtistId: string | undefined, isTopTrack: boolean) => {
     const trackFeatures = features[track.id]
     if (!anchorArtistId || !trackFeatures || tracks.has(track.id)) return
+    if (track.isrc) {
+      if (isrcs.has(track.isrc)) return
+      isrcs.add(track.isrc)
+    }
     tracks.set(track.id, {
       ...track,
       features: trackFeatures,
@@ -97,11 +135,8 @@ export function buildCatalogue(input: {
 
   for (const top of topTracks) add(top, anchorFor(top), true)
 
-  const topById = new Map(topTracks.map((t) => [t.id, t]))
   for (const rec of recommendations) {
-    const seed = topById.get(rec.seedTrackId)
-    if (!seed) continue
-    for (const track of rec.tracks) add(track, anchorFor(seed), false)
+    for (const track of rec.tracks) add(track, rec.anchorArtistId, false)
   }
 
   const topFeatures = topTracks.flatMap((t) => (features[t.id] ? [features[t.id]] : []))
@@ -110,7 +145,7 @@ export function buildCatalogue(input: {
   }
 
   return {
-    source: 'spotify+reccobeats',
+    source: 'spotify+lastfm+reccobeats',
     generatedAt,
     profile: { features: averageFeatures(topFeatures), topArtists },
     tracks: [...tracks.values()],

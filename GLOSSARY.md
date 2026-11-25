@@ -68,6 +68,14 @@ _Avoid_: new track, unheard track
 The action that ends the current session and begins another: Heard is emptied and the queue starts again from its first track. Session-scoped adjustments end with it; long-term ones carry over.
 _Avoid_: reset, refresh
 
+**Catalogue**
+The fixed snapshot of tracks the app can recommend, built once from the user's own listening: their top tracks plus tracks by artists similar to their top artists. Every track has its audio features. The app never asks a recommender for more during a session; steering only re-ranks the catalogue.
+_Avoid_: library, database, track pool
+
+**Taste profile**
+The average features of the user's top tracks alone. Recommended tracks never feed into it, so the quality of the catalogue does not change the profile. Similarity and explanations are measured against it.
+_Avoid_: user model, preferences
+
 **Anchor artist**
 The artist an explanation cites as the reason a track was picked: one of the user's top artists whose music led to the recommendation.
 _Avoid_: seed, source artist

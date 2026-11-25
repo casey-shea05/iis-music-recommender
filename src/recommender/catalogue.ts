@@ -23,14 +23,14 @@ export type CatalogueTrack = {
   features: Features
   /** The top artist the track was recommended from (the artist an explanation cites). Not necessarily one of `artists`. */
   anchorArtistId: string
-  /** True if the track came from the user's Spotify top tracks rather than a recommendation. */
+  /** True if the track came from the user's Spotify top tracks rather than a Last.fm pick. */
   isTopTrack: boolean
   /** The album image (~300px) from Spotify, or null if it has none: the UI shows a placeholder. */
   imageUrl: string | null
 }
 
 export type Catalogue = {
-  source: 'spotify+reccobeats'
+  source: 'spotify+lastfm+reccobeats'
   generatedAt: string
   profile: {
     /** Average features of the user's top tracks. */
