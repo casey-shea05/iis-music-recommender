@@ -13,7 +13,7 @@ const chooser = scoringChooser(catalogue as Catalogue)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PlaybackProvider tracks={tracks} chooser={chooser}>
+    <PlaybackProvider tracks={tracks} profile={(catalogue as Catalogue).profile} chooser={chooser}>
       <App />
     </PlaybackProvider>
   </StrictMode>,

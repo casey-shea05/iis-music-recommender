@@ -44,6 +44,22 @@ describe('usePlayback', () => {
     expect(result.current.playing).toBe(false)
   })
 
+  it('explains Now playing only, and only when given a profile', async () => {
+    const profile = { features: tracks[0].features, topArtists: [{ id: 'x', name: 'X' }] }
+    const player = new FakePlayer(tracks)
+    const connect = async (): Promise<ConnectedPlayer> => ({ mode: 'fake', reason: 'logged-out', player })
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <PlaybackProvider tracks={tracks} profile={profile} connect={connect}>{children}</PlaybackProvider>
+    )
+    const { result } = renderHook(() => usePlayback(), { wrapper })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(result.current.explanation?.anchorArtistId).toBe(tracks[0].anchorArtistId)
+    expect(result.current.topArtists).toEqual(profile.topArtists)
+
+    const plain = await connected()
+    expect(plain.result.current.explanation).toBeNull()
+  })
+
   it('plays and pauses Now playing, tracking its position', async () => {
     const { result } = await connected()
     act(() => result.current.togglePlay())
