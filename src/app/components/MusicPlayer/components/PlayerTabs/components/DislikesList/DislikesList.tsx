@@ -1,19 +1,25 @@
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDislikes } from '@/hooks/useDislikes.tsx'
-import { listedDislikes } from '@/recommender/dislikes.ts'
+import { usePlayback } from '@/hooks/usePlayback.tsx'
+import { effects, listedDislikes } from '@/recommender/dislikes.ts'
 import { Button } from '@/shadcn/button.tsx'
 import { TrackThumbnail } from '@/app/components/TrackThumbnail/TrackThumbnail.tsx'
 import { artistNames } from '@/utils/format.ts'
+import { effectsSummary } from '@/utils/effectsSummary.ts'
 import { reasonLabel } from '@/utils/reasonLabel.ts'
 
 /** This session's Dislikes, each with its reasons. Remove drops all of a track's reasons and lets it come up again. */
 export function DislikesList() {
   const { dislikes, remove } = useDislikes()
+  const { steerQueue } = usePlayback()
   const listed = listedDislikes(dislikes)
 
   return (
-    <ul className="flex flex-col gap-1">
+    <>
+      <p className="px-2 pb-1 text-xs text-muted-foreground">{effectsSummary(effects(dislikes))}</p>
+      {listed.length === 0 && <p className="px-2 py-1.5 text-sm text-muted-foreground">No dislikes this session</p>}
+      <ul className="flex flex-col gap-1">
       {listed.map(({ track, reasons }) => {
         const blocksArtist = reasons.some((r) => r.kind === 'artist')
         return (
@@ -31,6 +37,7 @@ export function DislikesList() {
               title="Remove this dislike and all its reasons"
               onClick={() => {
                 remove(track.id)
+                steerQueue()
                 // A kept block still hides the track, so don't promise it will come back.
                 toast(
                   blocksArtist
@@ -44,6 +51,7 @@ export function DislikesList() {
           </li>
         )
       })}
-    </ul>
+      </ul>
+    </>
   )
 }

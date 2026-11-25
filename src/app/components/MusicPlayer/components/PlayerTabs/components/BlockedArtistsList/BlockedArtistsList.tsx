@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { useDislikes } from '@/hooks/useDislikes.tsx'
 import { TrackThumbnail } from '@/app/components/TrackThumbnail/TrackThumbnail.tsx'
 import { Button } from '@/shadcn/button.tsx'
@@ -6,6 +7,9 @@ import { Button } from '@/shadcn/button.tsx'
 /** Blocked artists, one row each with the track(s) that blocked them. Unblock lets the artist come up again. */
 export function BlockedArtistsList() {
   const { blockedArtists, unblock } = useDislikes()
+  const { steerQueue } = usePlayback()
+
+  if (blockedArtists.length === 0) return <p className="px-2 py-1.5 text-sm text-muted-foreground">No blocked artists</p>
 
   return (
     <ul className="flex flex-col gap-1">
@@ -22,6 +26,7 @@ export function BlockedArtistsList() {
             aria-label={`Unblock ${name}`}
             onClick={() => {
               unblock(id)
+              steerQueue()
               toast(`${name} can come up again`)
             }}
           >

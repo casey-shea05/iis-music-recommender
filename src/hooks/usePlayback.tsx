@@ -46,6 +46,8 @@ export type Playback = {
    * then steered, so a dislike is one queue change.
    */
   removeNowPlaying(isExcluded?: (track: CatalogueTrack) => boolean): void
+  /** Re-runs the steer on the current queue without moving it, e.g. after a dislike is removed or an artist unblocked. */
+  steerQueue(): void
   /** Ends the session: empties Heard, rebuilds the queue from the first track and plays it. */
   startNewQueue(): void
   seek(positionMs: number): void
@@ -231,6 +233,12 @@ export function PlaybackProvider({ tracks, profile, chooser, steer, connect, log
         playerRef.current?.pause()
         setPlaying(false)
         setLoadedId(null)
+      },
+      steerQueue: () => {
+        if (!steer) return
+        const steered = steer(queueRef.current, heard)
+        queueRef.current = steered
+        setQueue(steered)
       },
       startNewQueue: () => moveCursorAndPlay(topUp(createQueue([]), choose), true),
       seek,
