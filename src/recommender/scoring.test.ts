@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { distance, similarity } from './scoring.ts'
+import { distance, explain, similarity } from './scoring.ts'
 
 describe('scoring', () => {
   it('divides tempo by 100 bpm and caps each distance at 1', () => {
@@ -12,5 +12,14 @@ describe('scoring', () => {
     const profile = { tempo: 120, energy: 0.5, valence: 0.5, acousticness: 0.5 }
     expect(similarity(profile, profile)).toBe(1)
     expect(similarity({ tempo: 220, energy: 0.5, valence: 0.5, acousticness: 0.5 }, profile)).toBeCloseTo(0.75)
+  })
+
+  it('explains a track with its anchor artist and the two features closest to the profile', () => {
+    const profile = { tempo: 120, energy: 0.5, valence: 0.5, acousticness: 0.5 }
+    const features = { tempo: 180, energy: 0.55, valence: 0.9, acousticness: 0.5 }
+    expect(explain({ anchorArtistId: 'a1', features }, profile)).toEqual({
+      anchorArtistId: 'a1',
+      features: ['acousticness', 'energy'],
+    })
   })
 })
