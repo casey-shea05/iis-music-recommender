@@ -23,7 +23,7 @@ const dislikeWith = (...chips: (string | RegExp)[]) => {
   if (screen.queryByRole('dialog')) press('Collapse player')
   press('Dislike this track')
   chips.forEach(press)
-  press('Submit')
+  press(/^(submit|dislike without a reason)$/i)
 }
 
 describe('disliking from the Reason panel', () => {
