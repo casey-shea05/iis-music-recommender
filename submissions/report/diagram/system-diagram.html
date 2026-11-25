@@ -1,0 +1,253 @@
+<title>Recommender System Diagram</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: architecture boxes grouped by where they run; green arrows trace the AI loop; each box carries its IIS spine layer as a chip. */
+:root {
+  --bg: #f6f6fb; --panel: #ffffff; --frame: #f5f7f9; --card: #ffffff; --fg: #1b2330; --muted: #5a6577; --line: #c9d0da;
+  --pill: #263241; --pill-fg: #ffffff;
+  --ai: #2f8f6f; --ai-bg: #e3f5ec; --ext: #c8793a; --ext-bg: #fde6d3;
+  --l-navy: #dde5f4; --lt-navy: #2a3f66; --l-blue: #d5ebfa; --lt-blue: #1c5f8c; --l-grey: #e7e9ef; --lt-grey: #4a5364; --l-green: #e3f1d3; --lt-green: #46691c; --l-purple: #e9e0fa; --lt-purple: #5a3c9c; --l-red: #fbdde4; --lt-red: #9b324b;
+  --app: #eef5fc; --app-line: #c5dcf2; --play-f: #f3effb; --play-line: #d8cdf0; --off: #fdf3ea; --off-line: #f0d6bd;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10141a; --panel: #151a21; --frame: #181e26; --card: #1d232c; --fg: #e3e8ef; --muted: #9aa5b5; --line: #3a4350;
+  --pill: #3a4757; --pill-fg: #f2f5f9; --ai: #6cc7a8; --ai-bg: #16302a; --ext: #e3b064; --ext-bg: #2e2617; --l-navy: #26324a; --lt-navy: #c3d2ee; --l-blue: #1d3446; --lt-blue: #a9d5f5; --l-grey: #2b2f37; --lt-grey: #c9cfda; --l-green: #283420; --lt-green: #c6e3a3; --l-purple: #2f2645; --lt-purple: #cdb9f3; --l-red: #3e2229; --lt-red: #f3b3c1; --app: #16212d; --app-line: #2b4258; --play-f: #1d1a2a; --play-line: #3d3557; --off: #241b14; --off-line: #4d3a29; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10141a; --panel: #151a21; --frame: #181e26; --card: #1d232c; --fg: #e3e8ef; --muted: #9aa5b5; --line: #3a4350;
+  --pill: #3a4757; --pill-fg: #f2f5f9; --ai: #6cc7a8; --ai-bg: #16302a; --ext: #e3b064; --ext-bg: #2e2617; --l-navy: #26324a; --lt-navy: #c3d2ee; --l-blue: #1d3446; --lt-blue: #a9d5f5; --l-grey: #2b2f37; --lt-grey: #c9cfda; --l-green: #283420; --lt-green: #c6e3a3; --l-purple: #2f2645; --lt-purple: #cdb9f3; --l-red: #3e2229; --lt-red: #f3b3c1; --app: #16212d; --app-line: #2b4258; --play-f: #1d1a2a; --play-line: #3d3557; --off: #241b14; --off-line: #4d3a29; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); }
+main { max-width: 1400px; margin: 0 auto; padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--display); font-weight: 600; font-size: 1.6rem; margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 70ch; margin: 0 0 20px; line-height: 1.5; }
+figure { margin: 0; }
+.scroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+svg { display: block; width: 100%; min-width: 1000px; height: auto; font-family: var(--body); }
+figcaption { color: var(--muted); max-width: 78ch; margin-top: 14px; line-height: 1.55; font-size: 0.92rem; }
+
+/* SVG classes */
+.bgfill { fill: var(--panel); }
+.frame { fill: var(--frame); stroke: var(--line); }
+.band { fill: var(--ai-bg); stroke: var(--ai); stroke-opacity: .5; }
+.fh { fill: var(--fg); font-family: var(--display); font-size: 14px; font-weight: 600; }
+.box { fill: var(--card); stroke: var(--muted); stroke-width: 1.2; }
+.ai { fill: var(--card); stroke: var(--ai); stroke-width: 1.8; }
+.fr-app { fill: var(--app); stroke: var(--app-line); }
+.fr-play { fill: var(--play-f); stroke: var(--play-line); }
+.fr-off { fill: var(--off); stroke: var(--off-line); }
+.ext { fill: var(--ext-bg); stroke: var(--ext); stroke-width: 1.2; }
+.sim { fill: var(--card); stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 2 3; }
+.plan { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 7 4; }
+.bt { fill: var(--fg); font-size: 13px; font-weight: 600; }
+.bd { fill: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+.chip { fill: var(--pill); }
+.chip-ai { fill: var(--ai); }
+.chip-x { fill: none; stroke: var(--muted); }
+.ct { fill: var(--pill-fg); font-size: 10px; font-weight: 600; }
+.ct-ai { fill: var(--panel); font-size: 10px; font-weight: 600; }
+.ct-x { fill: var(--muted); font-size: 10px; font-weight: 600; }
+.hc { fill: var(--ai); font-family: var(--mono); font-size: 11.5px; font-weight: 500; }
+.lab { fill: var(--fg); font-size: 11px; }
+.lab-ai { fill: var(--ai); font-size: 11px; font-weight: 600; }
+.lab-plan { fill: var(--muted); font-size: 11px; font-style: italic; }
+.ar { fill: none; stroke: var(--muted); stroke-width: 1.3; }
+.ar-ai { fill: none; stroke: var(--ai); stroke-width: 2; }
+.ar-plan { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.mk { fill: var(--muted); }
+.mk-ai { fill: var(--ai); }
+.leg { fill: var(--fg); font-size: 11.5px; }
+
+.l1 { fill: var(--l-navy); } .t1 { fill: var(--lt-navy); }
+.l2 { fill: var(--l-blue); } .t2 { fill: var(--lt-blue); }
+.l3 { fill: var(--l-grey); } .t3 { fill: var(--lt-grey); }
+.l4 { fill: var(--l-green); } .t4 { fill: var(--lt-green); }
+.l5 { fill: var(--l-purple); } .t5 { fill: var(--lt-purple); }
+.l6 { fill: var(--l-red); } .t6 { fill: var(--lt-red); }
+.l7 { fill: var(--l-blue); } .t7 { fill: var(--lt-blue); }
+.l8 { fill: var(--l-grey); } .t8 { fill: var(--lt-grey); }
+.l9 { fill: var(--l-green); } .t9 { fill: var(--lt-green); }
+.l10 { fill: var(--l-purple); } .t10 { fill: var(--lt-purple); }
+.l11 { fill: var(--l-red); } .t11 { fill: var(--lt-red); }
+</style>
+
+<main>
+  <h1>Recommender System Diagram</h1>
+  <p class="lede">The prototype's components and how they connect. Chips name each part's layer in the IIS conceptual spine; green marks where the system infers.</p>
+
+  <figure>
+    <div class="scroll">
+<svg viewBox="0 0 1330 820" role="img" aria-label="System architecture of the music recommender. The listener gives a reason in the Reason panel; session state passes it to the recommender, where a reason becomes an adjustment, scoring applies penalties and the queue planner returns a new Up next to the player view. Playback goes through a Player interface to a Spotify engine or a simulated fake engine. An offline Node script builds catalogue.json from Spotify, Last.fm and ReccoBeats. A Claude Haiku free-text interpreter is planned.">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0 0 L10 5 L0 10 z"/></marker>
+    <marker id="ah-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-ai" d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+  <rect class="bgfill" width="1330" height="820"/>
+
+  <!-- Legend -->
+  <g transform="translate(30 12)">
+    <rect class="box" x="0" y="0" width="22" height="14" rx="3"/><text class="leg" x="30" y="11">Implemented</text>
+    <rect class="sim" x="122" y="0" width="22" height="14" rx="3"/><text class="leg" x="152" y="11">Simulated</text>
+    <rect class="plan" x="232" y="0" width="22" height="14" rx="3"/><text class="leg" x="262" y="11">Planned</text>
+    <rect class="ext" x="330" y="0" width="22" height="14" rx="3"/><text class="leg" x="360" y="11">External service</text>
+    <rect class="ai" x="480" y="0" width="22" height="14" rx="3"/><text class="leg" x="510" y="11">Inference (the AI)</text>
+    <line class="ar-ai" x1="640" y1="7" x2="674" y2="7" marker-end="url(#ah-ai)"/><text class="leg" x="682" y="11">AI loop: a reason reshapes Up next</text>
+    <rect class="l3" x="922" y="0" width="40" height="15" rx="7.5"/><text class="ct t3" x="942" y="11" text-anchor="middle">1–11</text><text class="leg" x="970" y="11">IIS spine layer</text>
+  </g>
+
+  <!-- ===== Listener ===== -->
+  <rect class="box" x="30" y="100" width="190" height="72" rx="8"/>
+  <text class="bt" x="44" y="122">Listener</text>
+  <text class="bd" x="44" y="139">in a web browser</text>
+  <rect class="l1" x="44" y="148" width="60" height="16" rx="8"/><text class="ct t1" x="74" y="160" text-anchor="middle">1 Human</text>
+
+  <!-- ===== Planned free-text interpreter ===== -->
+  <rect class="plan" x="30" y="375" width="200" height="72" rx="8"/>
+  <text class="bt" x="44" y="397">Free-text interpreter</text>
+  <text class="bd" x="44" y="414">Claude Haiku API</text>
+  <rect class="l6" x="44" y="423" width="60" height="16" rx="8"/><text class="ct t6" x="74" y="435" text-anchor="middle">6 Model</text>
+
+  <!-- ===== Browser app ===== -->
+  <rect class="fr-app" x="250" y="60" width="760" height="470" rx="12"/>
+  <text class="fh" x="266" y="86">Browser app · React + TS + Vite</text>
+
+  <rect class="box" x="270" y="100" width="220" height="72" rx="8"/>
+  <text class="bt" x="284" y="122">Reason panel</text>
+  <text class="bd" x="284" y="139">reason chips + text box</text>
+  <rect class="l10" x="284" y="148" width="82" height="16" rx="8"/><text class="ct t10" x="325" y="160" text-anchor="middle">10 Feedback</text>
+
+  <rect class="box" x="510" y="100" width="220" height="72" rx="8"/>
+  <text class="bt" x="524" y="122">Player view</text>
+  <text class="bd" x="524" y="139">now playing, Up next, why</text>
+  <rect class="l8" x="524" y="148" width="64" height="16" rx="8"/><text class="ct t8" x="556" y="160" text-anchor="middle">8 Action</text>
+
+  <rect class="box" x="750" y="100" width="240" height="72" rx="8"/>
+  <text class="bt" x="764" y="122">Dislikes + Blocked tabs</text>
+  <text class="bd" x="764" y="139">remove reason, unblock</text>
+  <rect class="l10" x="764" y="148" width="82" height="16" rx="8"/><text class="ct t10" x="805" y="160" text-anchor="middle">10 Feedback</text>
+  <rect class="chip-x" x="852" y="148" width="92" height="16" rx="8"/><text class="ct-x" x="898" y="160" text-anchor="middle">Control: undo</text>
+
+  <rect class="box" x="266" y="230" width="112" height="72" rx="8"/>
+  <text class="bt" x="278" y="252">localStorage</text>
+  <text class="bd" x="278" y="269">blocked artists</text>
+  <rect class="l4" x="278" y="278" width="66" height="16" rx="8"/><text class="ct t4" x="311" y="290" text-anchor="middle">4 Memory</text>
+
+  <rect class="box" x="396" y="230" width="480" height="72" rx="8"/>
+  <text class="bt" x="410" y="252">Session state</text>
+  <text class="bd" x="410" y="269">React context: now playing, queue, reasons</text>
+  <rect class="l3" x="410" y="278" width="68" height="16" rx="8"/><text class="ct t3" x="444" y="290" text-anchor="middle">3 Context</text>
+
+  <!-- Recommender -->
+  <rect class="band" x="270" y="340" width="720" height="160" rx="10"/>
+  <text class="hc" x="974" y="488" text-anchor="end">Recommender · pure TypeScript</text>
+
+  <rect class="ai" x="290" y="375" width="200" height="72" rx="8"/>
+  <text class="bt" x="304" y="397">Reason → adjustment</text>
+  <text class="bd" x="304" y="414">threshold from the track</text>
+  <rect class="l6" x="304" y="423" width="60" height="16" rx="8"/><text class="ct t6" x="334" y="435" text-anchor="middle">6 Model</text>
+  <rect class="l11" x="370" y="423" width="90" height="16" rx="8"/><text class="ct t11" x="415" y="435" text-anchor="middle">11 Adaptation</text>
+
+  <rect class="ai" x="520" y="375" width="200" height="72" rx="8"/>
+  <text class="bt" x="534" y="397">Scoring</text>
+  <text class="bd" x="534" y="414">taste match − penalties</text>
+  <rect class="l6" x="534" y="423" width="60" height="16" rx="8"/><text class="ct t6" x="564" y="435" text-anchor="middle">6 Model</text>
+
+  <rect class="ai" x="750" y="375" width="220" height="72" rx="8"/>
+  <text class="bt" x="764" y="397">Queue planner</text>
+  <text class="bd" x="764" y="414">fill Up next, swap clashes</text>
+  <rect class="l7" x="764" y="423" width="76" height="16" rx="8"/><text class="ct t7" x="802" y="435" text-anchor="middle">7 Planning</text>
+
+  <!-- ===== Playback ===== -->
+  <rect class="fr-play" x="1030" y="60" width="280" height="470" rx="12"/>
+  <text class="fh" x="1046" y="86">Playback · TypeScript</text>
+
+  <rect class="box" x="1046" y="230" width="248" height="72" rx="8"/>
+  <text class="bt" x="1060" y="252">Player interface</text>
+  <text class="bd" x="1060" y="269">play, pause, seek, progress</text>
+  <rect class="l8" x="1060" y="278" width="104" height="16" rx="8"/><text class="ct t8" x="1112" y="290" text-anchor="middle">8 Tools / action</text>
+
+  <rect class="box" x="1046" y="350" width="120" height="64" rx="8"/>
+  <text class="bt" x="1058" y="372">Spotify engine</text>
+  <text class="bd" x="1058" y="389">Web Playback</text>
+  <text class="bd" x="1058" y="403">SDK</text>
+
+  <rect class="sim" x="1174" y="350" width="120" height="64" rx="8"/>
+  <text class="bt" x="1186" y="372">Fake engine</text>
+  <text class="bd" x="1186" y="389">timer, no audio</text>
+
+  <rect class="ext" x="1046" y="440" width="120" height="66" rx="8"/>
+  <text class="bt" x="1058" y="461">Spotify device</text>
+  <text class="bd" x="1058" y="477">plays the track</text>
+  <rect class="l9" x="1058" y="484" width="96" height="16" rx="8"/><text class="ct t9" x="1106" y="496" text-anchor="middle">9 Environment</text>
+
+  <!-- ===== Offline catalogue build ===== -->
+  <rect class="fr-off" x="20" y="480" width="220" height="324" rx="12"/>
+  <text class="fh" x="36" y="504">Offline · run once</text>
+
+  <rect class="ext" x="36" y="518" width="188" height="72" rx="8"/>
+  <text class="bt" x="50" y="540">Music APIs</text>
+  <text class="bd" x="50" y="557">Spotify·Last.fm·ReccoBeats</text>
+  <rect class="l2" x="50" y="566" width="70" height="16" rx="8"/><text class="ct t2" x="85" y="578" text-anchor="middle">2 Sensing</text>
+  <rect class="l5" x="126" y="566" width="80" height="16" rx="8"/><text class="ct t5" x="166" y="578" text-anchor="middle">5 Knowledge</text>
+  <line class="ar" x1="130" y1="590" x2="130" y2="616" marker-end="url(#ah)"/>
+  <text class="lab" x="138" y="607">history + features</text>
+
+  <rect class="ai" x="36" y="618" width="188" height="72" rx="8"/>
+  <text class="bt" x="50" y="640">Catalogue script</text>
+  <text class="bd" x="50" y="657">Node: builds taste profile</text>
+  <rect class="l6" x="50" y="666" width="60" height="16" rx="8"/><text class="ct t6" x="80" y="678" text-anchor="middle">6 Model</text>
+  <line class="ar" x1="130" y1="690" x2="130" y2="714" marker-end="url(#ah)"/>
+  <text class="lab" x="138" y="706">writes</text>
+
+  <rect class="box" x="36" y="716" width="188" height="72" rx="8"/>
+  <text class="bt" x="50" y="738">catalogue.json</text>
+  <text class="bd" x="50" y="755">tracks + taste profile</text>
+  <rect class="l5" x="50" y="764" width="80" height="16" rx="8"/><text class="ct t5" x="90" y="776" text-anchor="middle">5 Knowledge</text>
+
+  <!-- ===== Arrows ===== -->
+  <!-- AI loop -->
+  <line class="ar-ai" x1="220" y1="136" x2="268" y2="136" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="244" y="128" text-anchor="middle">rejects</text>
+  <line class="ar-ai" x1="440" y1="172" x2="440" y2="228" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="447" y="205">dislike + reason</text>
+  <line class="ar-ai" x1="440" y1="302" x2="440" y2="373" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="447" y="328">reasons</text>
+  <line class="ar-ai" x1="490" y1="411" x2="518" y2="411" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="504" y="368" text-anchor="middle">penalties</text>
+  <line class="ar-ai" x1="720" y1="411" x2="748" y2="411" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="734" y="368" text-anchor="middle">ranked</text>
+  <line class="ar-ai" x1="820" y1="375" x2="820" y2="304" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="827" y="328">new Up next</text>
+  <line class="ar-ai" x1="620" y1="230" x2="620" y2="174" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="627" y="205">queue + why</text>
+  <path class="ar-ai" d="M620 100 V46 H125 V98" marker-end="url(#ah-ai)"/>
+  <text class="lab-ai" x="372" y="41" text-anchor="middle">music + explanation</text>
+
+  <!-- Other flows -->
+  <line class="ar" x1="860" y1="172" x2="860" y2="228" marker-end="url(#ah)"/>
+  <text class="lab" x="867" y="205">undo</text>
+  <line class="ar" x1="396" y1="266" x2="380" y2="266" marker-end="url(#ah)"/>
+  <line class="ar" x1="876" y1="255" x2="1044" y2="255" marker-end="url(#ah)"/>
+  <text class="lab" x="960" y="248" text-anchor="middle">play</text>
+  <line class="ar" x1="1046" y1="280" x2="878" y2="280" marker-end="url(#ah)"/>
+  <text class="lab" x="960" y="296" text-anchor="middle">progress</text>
+  <line class="ar" x1="1106" y1="302" x2="1106" y2="348" marker-end="url(#ah)"/>
+  <text class="lab" x="1113" y="330">logged in</text>
+  <line class="ar" x1="1234" y1="302" x2="1234" y2="348" marker-end="url(#ah)"/>
+  <text class="lab" x="1241" y="330">fallback</text>
+  <line class="ar" x1="1106" y1="414" x2="1106" y2="438" marker-end="url(#ah)"/>
+  <path class="ar" d="M224 752 H600 V449" marker-end="url(#ah)"/>
+  <text class="lab" x="412" y="744" text-anchor="middle">imported at build</text>
+
+  <!-- Planned flows -->
+  <path class="ar-plan" d="M300 172 V205 H130 V373" marker-end="url(#ah)"/>
+  <text class="lab-plan" x="137" y="292">typed reason</text>
+  <line class="ar-plan" x1="230" y1="411" x2="288" y2="411" marker-end="url(#ah)"/>
+</svg>
+    </div>
+    <figcaption>Green traces the interaction loop: a reason becomes an adjustment, scoring penalises tracks that clash with it, and the queue planner swaps them out of Up next. The taste profile is inferred offline from listening history and stays fixed; reasons re-weight scores on top of it. The fake engine is a simulated stand-in for Spotify, and the Claude Haiku interpreter for typed reasons is planned but not built.</figcaption>
+  </figure>
+</main>
