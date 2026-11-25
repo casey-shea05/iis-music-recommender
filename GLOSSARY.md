@@ -9,11 +9,15 @@ The always-present panel in the expanded player where the user picks reasons for
 _Avoid_: reason prompt, dislike dialog
 
 **Dislikes panel**
-A tab beside the Reason panel in the expanded player, listing every Dislike with its reasons (this session and long-term) under a summary of the current effects. Removing a Dislike there drops all its reasons and lets the track come up again. It is disabled while there are no Dislikes.
+A tab beside the Reason panel in the expanded player, listing every Dislike of this session with its reasons, under a summary of the current effects. Removing a Dislike there drops all its reasons and lets the track come up again, but never unblocks an artist. It is disabled while there are no Dislikes.
 _Avoid_: reasons panel, history
 
+**Blocked artists panel**
+A third tab beside the Reason and Dislikes panels, listing each Blocked artist once, with the tracks that blocked them and an Unblock button. It is disabled while no artist is blocked, and after a reload (when only blocks remain) it is the tab with content.
+_Avoid_: blocklist, artist settings
+
 **Dislike**
-The record of a track the user rejected, with any reasons given on it (none is allowed). It is created when the user submits the Reason panel, and the track leaves the queue and Heard at that moment. While the record exists the track can't come up again. Removing it drops all its reasons and lets the track come up again.
+The record of a track the user rejected, with any reasons given on it (none is allowed). It is created when the user submits the Reason panel, and the track leaves the queue and Heard at that moment. While the record exists the track can't come up again. Removing it drops all its reasons and lets the track come up again. A Dislike lasts one session; it can carry the "Not a fan of this artist" reason, but the block it creates is a separate thing (see Blocked artist).
 _Avoid_: thumbs-down, ban
 
 **Adjustment**
@@ -33,7 +37,7 @@ An unheard Up next track that still conflicts with an effect, because nothing be
 _Avoid_: fallback, no match
 
 **Blocked artist**
-The primary (first-listed) artist of a track disliked with "Not a fan of this artist". Any track crediting a blocked artist is excluded from Up next, long-term.
+The primary (first-listed) artist of a track disliked with "Not a fan of this artist". Any track crediting a blocked artist is excluded from Up next. The block is long-term and stands on its own: it survives the session, and removing the Dislike it came from does not lift it. Only Unblock in the Blocked artists panel does; that also drops the "Not a fan" reason from any Dislike of this session that carries it.
 _Avoid_: banned artist, muted artist
 
 **Session**
