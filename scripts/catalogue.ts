@@ -115,9 +115,15 @@ export function buildCatalogue(input: {
     (top.artists.find((a) => topArtistIds.has(a.id)) ?? top.artists[0])?.id
 
   const tracks = new Map<string, CatalogueTrack>()
+  // Spotify gives one recording several IDs (album, single, deluxe), so a recording is also known by its ISRC.
+  const isrcs = new Set<string>()
   const add = (track: SpotifyTrack, anchorArtistId: string | undefined, isTopTrack: boolean) => {
     const trackFeatures = features[track.id]
     if (!anchorArtistId || !trackFeatures || tracks.has(track.id)) return
+    if (track.isrc) {
+      if (isrcs.has(track.isrc)) return
+      isrcs.add(track.isrc)
+    }
     tracks.set(track.id, {
       ...track,
       features: trackFeatures,

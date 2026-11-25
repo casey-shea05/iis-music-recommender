@@ -145,6 +145,23 @@ describe('buildCatalogue', () => {
     expect(catalogue.tracks.find((t) => t.id === 'r1')?.anchorArtistId).toBe('A1')
   })
 
+  it('treats the same ISRC under a different Spotify ID as a duplicate, keeping the top track', () => {
+    const top = { ...track('t1', 'A1'), isrc: 'GBUM72400001' }
+    const single = { ...track('r1', 'A1'), isrc: 'GBUM72400001' }
+    const other = { ...track('r2', 'X9'), isrc: 'USRC12400002' }
+    const catalogue = buildCatalogue({
+      topTracks: [top],
+      topArtists,
+      recommendations: [{ anchorArtistId: 'A2', tracks: [single, other] }],
+      features: { t1: f(100), r1: f(100), r2: f(90) },
+      generatedAt,
+    })
+    expect(catalogue.tracks.map((t) => [t.id, t.isTopTrack])).toEqual([
+      ['t1', true],
+      ['r2', false],
+    ])
+  })
+
   it('skips tracks with no artists instead of throwing', () => {
     const noArtists: SpotifyTrack = { id: 'p1', title: 'Podcast', artists: [], durationMs: 1 }
     const catalogue = buildCatalogue({
