@@ -19,8 +19,7 @@ import {
 const RECCOBEATS = 'https://api.reccobeats.com/v1'
 const RECS_PER_SEED = 20
 const FEATURE_BATCH = 40
-const IMAGE_BATCH = 50 // Spotify's limit for GET /tracks
-const IMAGE_SIZE = 300
+const IMAGE_CONCURRENCY = 5
 
 // Same variables the browser app reads, so one .env serves both.
 const clientId = process.env.SPOTIFY_CLIENT_ID
@@ -232,26 +231,23 @@ async function fetchFeatures(ids: string[]): Promise<Record<string, Features>> {
   return features
 }
 
-// Spotify album art, by track ID. A batch that fails is skipped: those tracks just get no image.
-async function fetchImages(accessToken: string, ids: string[]): Promise<Record<string, string>> {
-  const headers = { Authorization: `Bearer ${accessToken}` }
+// Spotify album art (300x300) by track ID, from the public oEmbed endpoint: it needs no login, and the Web API's
+// batch GET /tracks returns 403 for this app. A track that fails is skipped: it just gets no image.
+async function fetchImages(ids: string[]): Promise<Record<string, string>> {
   const images: Record<string, string> = {}
-  for (let i = 0; i < ids.length; i += IMAGE_BATCH) {
-    const batch = ids.slice(i, i + IMAGE_BATCH)
-    try {
-      const { tracks } = await getJson<{
-        tracks: ({ id: string; album: { images: { url: string; width?: number | null }[] } } | null)[]
-      }>(`https://api.spotify.com/v1/tracks?ids=${batch.join(',')}`, headers)
-      for (const t of tracks) {
-        // The image closest to IMAGE_SIZE: sharp enough for the player, not wasteful for the list rows.
-        const [best] = [...(t?.album.images ?? [])].sort(
-          (a, b) => Math.abs((a.width ?? 0) - IMAGE_SIZE) - Math.abs((b.width ?? 0) - IMAGE_SIZE),
-        )
-        if (t && best) images[t.id] = best.url
-      }
-    } catch (error) {
-      console.warn(`  images batch at ${i} skipped (${error instanceof Error ? error.message.slice(0, 120) : error})`)
-    }
+  for (let i = 0; i < ids.length; i += IMAGE_CONCURRENCY) {
+    await Promise.all(
+      ids.slice(i, i + IMAGE_CONCURRENCY).map(async (id) => {
+        try {
+          const { thumbnail_url } = await getJson<{ thumbnail_url?: string }>(
+            `https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`,
+          )
+          if (thumbnail_url) images[id] = thumbnail_url
+        } catch (error) {
+          console.warn(`  image for ${id} skipped (${error instanceof Error ? error.message.slice(0, 100) : error})`)
+        }
+      }),
+    )
     await sleep(200)
   }
   return images
@@ -300,7 +296,7 @@ Object.assign(features, await fetchFeatures(recIds))
 
 const imageIds = Object.keys(features)
 console.log(`Fetching Spotify images for ${imageIds.length} tracks...`)
-const images = await fetchImages(accessToken, imageIds)
+const images = await fetchImages(imageIds)
 
 const catalogue = buildCatalogue({
   topTracks: seeds,
