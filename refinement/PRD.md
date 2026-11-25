@@ -109,6 +109,7 @@ These don't trace to the problem, so they sit outside the requirements.
 
 - Multiple playlists.
 - A setting to turn reason prompts off. This works against the problem by bringing back guessing, so it would need care.
+- Richer explanation wording. Explanations only name the features a track is closest to (e.g. "Closest to your taste in tempo and mood"). A fuller system would add qualitative words with thresholds, such as "a similar tempo to your usual", once the UI shows how close a feature really is.
 
 ## Rationale table
 

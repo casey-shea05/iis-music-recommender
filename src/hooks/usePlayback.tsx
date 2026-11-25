@@ -4,7 +4,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { connectPlayer, startLogIn, type ConnectedPlayer, type FallbackReason } from '@/playback/connectPlayer.ts'
 import type { Player } from '@/playback/player.ts'
-import type { CatalogueTrack } from '@/recommender/catalogue.ts'
+import type { ArtistRef, CatalogueTrack, Features } from '@/recommender/catalogue.ts'
+import { explain, type Explanation } from '@/recommender/scoring.ts'
 import {
   catalogueChooser, createQueue, hasNext, hasPrevious, jumpToSkipping, next, nowPlaying, previous, recordHeard, topUp, upNext,
   type Chooser, type Queue,
@@ -17,6 +18,10 @@ export type Playback = {
   /** Why the fake engine is running; null otherwise. */
   fallbackReason: FallbackReason | null
   nowPlaying: CatalogueTrack | null
+  /** Why Now playing was picked; null when nothing plays or no profile was given. Up next and Heard have none. */
+  explanation: Explanation | null
+  /** The user's top artists, for naming an explanation's anchor artist. */
+  topArtists: readonly ArtistRef[]
   /** From the engine once the track starts; null means show a placeholder. */
   artworkUrl: string | null
   playing: boolean
@@ -52,6 +57,8 @@ const PlaybackContext = createContext<Playback | null>(null)
 
 type ProviderProps = {
   tracks: readonly CatalogueTrack[]
+  /** The taste profile (average features and top artists); explanations need it. Pass a stable object: a new one each render rebuilds the context value. */
+  profile?: { features: Features; topArtists: ArtistRef[] }
   /** Picks fresh tracks for Up next; defaults to catalogue file order. */
   chooser?: Chooser<CatalogueTrack>
   /** Swapped in tests; defaults to trying Spotify, then the fake engine. */
@@ -61,7 +68,7 @@ type ProviderProps = {
   children: ReactNode
 }
 
-export function PlaybackProvider({ tracks, chooser, connect, logIn = startLogIn, children }: ProviderProps) {
+export function PlaybackProvider({ tracks, profile, chooser, connect, logIn = startLogIn, children }: ProviderProps) {
   const [connection, setConnection] = useState<ConnectedPlayer | null>(null)
   const playerRef = useRef<Player | null>(null)
   const choose = useMemo(() => chooser ?? catalogueChooser(tracks), [chooser, tracks])
@@ -183,6 +190,8 @@ export function PlaybackProvider({ tracks, chooser, connect, logIn = startLogIn,
       ready: connection !== null,
       fallbackReason: connection?.mode === 'fake' ? connection.reason : null,
       nowPlaying: playingTrack,
+      explanation: playingTrack && profile ? explain(playingTrack, profile.features) : null,
+      topArtists: profile?.topArtists ?? [],
       artworkUrl,
       playing,
       positionMs,
@@ -207,7 +216,7 @@ export function PlaybackProvider({ tracks, chooser, connect, logIn = startLogIn,
       toggleMute,
       logIn,
     }),
-    [connection, queue, heard, choose, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
+    [connection, queue, heard, choose, profile, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
   )
 
   return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>
