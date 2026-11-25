@@ -8,6 +8,10 @@ _Avoid_: feedback, rating
 The always-present panel in the expanded player where the user picks reasons for Now playing and submits them. Submitting with nothing picked is a Dislike with no reasons. Nothing is recorded until Submit, and the panel resets whenever Now playing changes.
 _Avoid_: reason prompt, dislike dialog
 
+**Dislikes panel**
+A tab beside the Reason panel in the expanded player, listing every Dislike with its reasons (this session and long-term) under a summary of the current effects. Removing a Dislike there drops all its reasons and lets the track come up again. It is disabled while there are no Dislikes.
+_Avoid_: reasons panel, history
+
 **Dislike**
 The record of a track the user rejected, with any reasons given on it (none is allowed). It is created when the user submits the Reason panel, and the track leaves the queue and Heard at that moment. While the record exists the track can't come up again. Removing it drops all its reasons and lets the track come up again.
 _Avoid_: thumbs-down, ban
@@ -17,7 +21,7 @@ What a reason is interpreted into: a direction on one feature (e.g. tempo up) or
 _Avoid_: rule, filter, preference
 
 **Effect**
-The merged result of all active adjustments on one feature, as shown in the Active reasons strip. The latest reason on a feature wins; different features combine.
+The merged result of all active adjustments on one feature, as summarised at the top of the Dislikes panel. The latest reason on a feature wins; different features combine.
 _Avoid_: setting, active reason
 
 **Conflict**
