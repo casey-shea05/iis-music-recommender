@@ -8,8 +8,10 @@ Before adding or moving a file in `src/`, or importing across its folders, read 
 
 Outside `src/`:
 
-- `refinement/PRD.md`: the design brief, covering requirements, known limitations and the rationale table.
-- `discovery/`: the literature review and its research logs. `discovery/research-papers/` is gitignored.
+- `docs/PRD.md`: the design brief, covering requirements, known limitations and the rationale table.
+- `submissions/`: what gets handed in besides the code.
+  - `literature-review/`: the literature review and its research logs. `research-papers/` inside it is gitignored.
+  - `report/`: the report, with `storyboards/` (and the Gemini prompts that made them) and `screenshots/` of the built UI.
 - `scripts/`: the catalogue script (`npm run catalogue`). It writes `data/catalogue.json`, which is gitignored personal data: only `src/main.tsx` imports it, and tests use `makeTrack` from `src/testFixtures.tsx`.
 
 ## UI verification
