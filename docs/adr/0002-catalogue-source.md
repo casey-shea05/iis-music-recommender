@@ -10,7 +10,9 @@ ADR 0001 built the catalogue from ReccoBeats recommendations seeded by the user'
 
 ## Decision
 
-Last.fm chooses which tracks enter the catalogue: for each top artist, `artist.getSimilar` (similarity of at least 0.3, the 10 closest), then each similar artist's top 3 tracks. ReccoBeats is kept only to look up audio features and to resolve a track to its Spotify ID, with the existing ISRC and title matching. The ReccoBeats recommendation step is removed. The anchor artist stays the top artist behind a pick.
+Last.fm chooses which tracks enter the catalogue: for each top artist, `artist.getSimilar` (similarity of at least 0.3, the 10 closest), then each similar artist's top 3 tracks. Spotify search resolves each Last.fm track to a Spotify track (ID, ISRC, artists), and the result must match on title and artist. ReccoBeats is kept only for audio features, plus an ISRC lookup when it knows a recording under a different Spotify ID. The ReccoBeats recommendation step is removed. The anchor artist stays the top artist behind a pick.
+
+*Amended 2026-11-25:* the first version resolved Last.fm tracks with ReccoBeats' title search. That search is loose and stops at 200 results, so a common title ("Taste", "Woman") filled all 4 pages with other songs, and every miss cost 4 requests. In a partial run, 31% of lookups missed, and a full run would have taken about 1,400 ReccoBeats requests and kept hitting its rate limit. Spotify search takes one request per track and accepts an artist filter. ReccoBeats' title search is now only a last resort for top tracks.
 
 ## Considered options
 
@@ -23,5 +25,6 @@ Last.fm chooses which tracks enter the catalogue: for each top artist, `artist.g
 ## Consequences
 
 - The script needs a free `LASTFM_API_KEY` in `.env`.
-- It makes roughly 600 more lookups than before (resolving each track to a Spotify ID and features), which is acceptable for a script that runs once.
+- It makes roughly 600 Spotify searches (one per Last.fm track), spaced to stay under Spotify's rolling rate limit. ReccoBeats gets batched feature requests and a few ISRC lookups.
+- The script keeps a gitignored cache of lookups (`data/catalogue-cache.json`), so a rerun or crash doesn't repeat them.
 - The app can't ask for more tracks during a session. Steering stays a re-ranking of this fixed catalogue.

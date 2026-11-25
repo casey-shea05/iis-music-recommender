@@ -10,11 +10,11 @@ export type SpotifyTrack = {
   isrc?: string
 }
 
-/** A track returned by ReccoBeats' title search. `id` is the Spotify ID ReccoBeats knows it by. */
-export type ReccoCandidate = {
+/** A search result (Spotify or ReccoBeats) that might be the track we want. `id` is its Spotify track ID. */
+export type TrackCandidate = {
   id: string
   title: string
-  /** `id` is the Spotify artist ID, when ReccoBeats gives one. */
+  /** `id` is the Spotify artist ID, when the source gives one. */
   artists: { id?: string; name: string }[]
   isrc?: string
 }
@@ -42,6 +42,18 @@ export function pickSimilarArtists(
     .map((a) => a.name)
 }
 
+/**
+ * Last.fm often credits several artists as one name ("Jessie J, Ariana Grande & Nicki Minaj"), where Spotify
+ * lists them separately. Returns the full name first (some acts have "&" in their name), then each part.
+ */
+export function splitArtistNames(credit: string): string[] {
+  const parts = credit
+    .split(/\s*,\s*|\s+&\s+|\s+(?:feat|ft)\.\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  return parts.length > 1 ? [credit, ...parts] : [credit]
+}
+
 export function spotifyIdFromHref(href: string): string | undefined {
   return /^https:\/\/open\.spotify\.com\/track\/([A-Za-z0-9]+)/.exec(href)?.[1]
 }
@@ -49,20 +61,22 @@ export function spotifyIdFromHref(href: string): string | undefined {
 // Unicode-aware, so non-Latin titles and artists (K-pop, J-pop, ...) don't collapse to an empty string.
 const normalise = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 
-// Drops "(feat. X)" and " - Remastered 2020" style suffixes before comparing titles. A suffix is only
+// Drops "(feat. X)", "ft. X" and " - Remastered 2020" style suffixes before comparing titles. A suffix is only
 // dropped if something is left, and " - Part 2" style subtitles are kept because they change the song.
 const normaliseTitle = (title: string) => {
   const stripped = title
     .replace(/\s*[([].*$/, '')
+    .replace(/\s+(?:feat|ft)\.\s.*$/i, '')
     .replace(/\s+-\s+(?:.*\b(?:remaster(?:ed)?|version|mix|edit|mono|stereo|live|deluxe|bonus|single|radio|slowed|sped)\b.*|\d{4}.*)$/i, '')
   return normalise(normalise(stripped) ? stripped : title)
 }
 
 /**
- * Spotify can give the same recording several IDs (album, single, re-release) and ReccoBeats
- * only knows one. Find it by ISRC first, then by title and artist name.
+ * The candidate that is this track: by ISRC first, then by title and artist name. Used to pick the right
+ * Spotify search result for a Last.fm track, and the ID ReccoBeats knows a recording by (Spotify can give
+ * the same recording several IDs: album, single, re-release).
  */
-export function matchReccoTrack(track: SpotifyTrack, candidates: ReccoCandidate[]): string | undefined {
+export function matchTrack(track: SpotifyTrack, candidates: TrackCandidate[]): string | undefined {
   const byIsrc = track.isrc && candidates.find((c) => c.isrc === track.isrc)
   if (byIsrc) return byIsrc.id
 

@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest'
 import type { Features } from '../src/recommender/catalogue.ts'
 import {
   buildCatalogue,
-  matchReccoTrack,
+  matchTrack,
   pickSimilarArtists,
+  splitArtistNames,
   spotifyIdFromHref,
-  type ReccoCandidate,
+  type TrackCandidate,
   type SpotifyTrack,
 } from './catalogue.ts'
 
@@ -169,7 +170,7 @@ describe('buildCatalogue', () => {
   })
 })
 
-describe('matchReccoTrack', () => {
+describe('matchTrack', () => {
   const mine: SpotifyTrack = {
     id: 'mine',
     title: 'Disturbia',
@@ -177,7 +178,7 @@ describe('matchReccoTrack', () => {
     durationMs: 1,
     isrc: 'USUM70814476',
   }
-  const cand = (id: string, title: string, artist: string, isrc?: string): ReccoCandidate => ({
+  const cand = (id: string, title: string, artist: string, isrc?: string): TrackCandidate => ({
     id,
     title,
     artists: [{ name: artist }],
@@ -185,7 +186,7 @@ describe('matchReccoTrack', () => {
   })
 
   it('matches on ISRC', () => {
-    expect(matchReccoTrack(mine, [cand('x', 'Other', 'Other', 'USUM70814476')])).toBe('x')
+    expect(matchTrack(mine, [cand('x', 'Other', 'Other', 'USUM70814476')])).toBe('x')
   })
 
   it('prefers an ISRC match over an earlier name match', () => {
@@ -193,51 +194,84 @@ describe('matchReccoTrack', () => {
       cand('byName', 'Disturbia', 'Rihanna', 'DIFFERENT'),
       cand('byIsrc', 'Disturbia', 'Rihanna', 'USUM70814476'),
     ]
-    expect(matchReccoTrack(mine, candidates)).toBe('byIsrc')
+    expect(matchTrack(mine, candidates)).toBe('byIsrc')
   })
 
   it('falls back to title and artist name when there is no ISRC match', () => {
     const noIsrc = { ...mine, isrc: undefined }
-    expect(matchReccoTrack(noIsrc, [cand('x', 'Disturbia', 'Rihanna')])).toBe('x')
-    expect(matchReccoTrack(mine, [cand('x', 'Disturbia', 'Rihanna', 'OTHER')])).toBe('x')
+    expect(matchTrack(noIsrc, [cand('x', 'Disturbia', 'Rihanna')])).toBe('x')
+    expect(matchTrack(mine, [cand('x', 'Disturbia', 'Rihanna', 'OTHER')])).toBe('x')
   })
 
   it('ignores case, punctuation, and remaster or feature suffixes', () => {
-    expect(matchReccoTrack(mine, [cand('x', 'DISTURBIA (feat. Someone)', 'rihanna!')])).toBe('x')
-    expect(matchReccoTrack(mine, [cand('y', 'Disturbia - Remastered 2020', 'Rihanna')])).toBe('y')
+    expect(matchTrack(mine, [cand('x', 'DISTURBIA (feat. Someone)', 'rihanna!')])).toBe('x')
+    expect(matchTrack(mine, [cand('y', 'Disturbia - Remastered 2020', 'Rihanna')])).toBe('y')
+  })
+
+  it('ignores an unbracketed "ft." or "feat." suffix, as Last.fm titles often have', () => {
+    const lastfm = { ...mine, title: 'Disturbia ft. Someone, Another', isrc: undefined }
+    expect(matchTrack(lastfm, [cand('x', 'Disturbia', 'Rihanna')])).toBe('x')
+    const feat = { ...mine, title: 'Disturbia feat. Someone', isrc: undefined }
+    expect(matchTrack(feat, [cand('y', 'Disturbia', 'Rihanna')])).toBe('y')
   })
 
   it('matches when any one of several artists matches', () => {
     const collab = { ...mine, artists: [{ id: 'A', name: 'Someone' }, { id: 'RH', name: 'Rihanna' }] }
-    expect(matchReccoTrack(collab, [cand('x', 'Disturbia', 'Rihanna')])).toBe('x')
+    expect(matchTrack(collab, [cand('x', 'Disturbia', 'Rihanna')])).toBe('x')
   })
 
   it('does not match a different song by the same artist', () => {
-    expect(matchReccoTrack(mine, [cand('x', 'Umbrella', 'Rihanna')])).toBeUndefined()
+    expect(matchTrack(mine, [cand('x', 'Umbrella', 'Rihanna')])).toBeUndefined()
   })
 
   it('does not match the same title by a different artist', () => {
-    expect(matchReccoTrack(mine, [cand('x', 'Disturbia', 'Cover Band')])).toBeUndefined()
+    expect(matchTrack(mine, [cand('x', 'Disturbia', 'Cover Band')])).toBeUndefined()
   })
 
   it('matches non-Latin titles and artists exactly, and never matches different ones', () => {
     const kpop: SpotifyTrack = { ...mine, title: '사랑', artists: [{ id: 'k', name: '방탄소년단' }], isrc: undefined }
-    expect(matchReccoTrack(kpop, [cand('x', '사랑', '방탄소년단')])).toBe('x')
-    expect(matchReccoTrack(kpop, [cand('y', '노래', '아이유')])).toBeUndefined()
+    expect(matchTrack(kpop, [cand('x', '사랑', '방탄소년단')])).toBe('x')
+    expect(matchTrack(kpop, [cand('y', '노래', '아이유')])).toBeUndefined()
   })
 
   it('keeps titles that start with a bracket', () => {
     const t: SpotifyTrack = { ...mine, title: "(What's the Story) Morning Glory?", artists: [{ id: 'o', name: 'Oasis' }], isrc: undefined }
-    expect(matchReccoTrack(t, [cand('x', "(What's the Story) Morning Glory?", 'Oasis')])).toBe('x')
-    expect(matchReccoTrack(t, [cand('y', '(Some Other Song)', 'Oasis')])).toBeUndefined()
+    expect(matchTrack(t, [cand('x', "(What's the Story) Morning Glory?", 'Oasis')])).toBe('x')
+    expect(matchTrack(t, [cand('y', '(Some Other Song)', 'Oasis')])).toBeUndefined()
   })
 
   it('does not treat different parts of a song as the same track', () => {
     const t: SpotifyTrack = { ...mine, title: 'Song - Part 2', isrc: undefined }
-    expect(matchReccoTrack(t, [cand('x', 'Song - Part 1', 'Rihanna')])).toBeUndefined()
+    expect(matchTrack(t, [cand('x', 'Song - Part 1', 'Rihanna')])).toBeUndefined()
   })
 
   it('returns undefined when there are no candidates', () => {
-    expect(matchReccoTrack(mine, [])).toBeUndefined()
+    expect(matchTrack(mine, [])).toBeUndefined()
+  })
+})
+
+describe('splitArtistNames', () => {
+  it('splits a Last.fm credit into each artist, keeping the full name first', () => {
+    expect(splitArtistNames('Jessie J, Ariana Grande & Nicki Minaj')).toEqual([
+      'Jessie J, Ariana Grande & Nicki Minaj',
+      'Jessie J',
+      'Ariana Grande',
+      'Nicki Minaj',
+    ])
+    expect(splitArtistNames('Calvin Harris feat. Rihanna')).toEqual(['Calvin Harris feat. Rihanna', 'Calvin Harris', 'Rihanna'])
+  })
+
+  it('keeps the full name, so a duo with "&" in its name still matches', () => {
+    const duo: SpotifyTrack = {
+      id: '',
+      title: 'The Sound of Silence',
+      artists: splitArtistNames('Simon & Garfunkel').map((name) => ({ id: '', name })),
+      durationMs: 0,
+    }
+    expect(matchTrack(duo, [{ id: 'x', title: 'The Sound of Silence', artists: [{ name: 'Simon & Garfunkel' }] }])).toBe('x')
+  })
+
+  it('returns a single name unchanged', () => {
+    expect(splitArtistNames('Rihanna')).toEqual(['Rihanna'])
   })
 })
