@@ -5,7 +5,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { connectPlayer, startLogIn, type ConnectedPlayer, type FallbackReason } from '@/playback/connectPlayer.ts'
 import type { Player } from '@/playback/player.ts'
 import type { CatalogueTrack } from '@/recommender/catalogue.ts'
-import { createQueue, hasNext, hasPrevious, jumpTo, next, nowPlaying, previous, type Queue } from '@/recommender/queue.ts'
+import {
+  catalogueChooser, createQueue, hasNext, hasPrevious, jumpToSkipping, next, nowPlaying, previous, recordHeard, topUp, upNext,
+  type Queue,
+} from '@/recommender/queue.ts'
 
 export type Playback = {
   status: 'connecting' | 'spotify' | 'fake'
@@ -21,11 +24,19 @@ export type Playback = {
   durationMs: number
   hasPrevious: boolean
   hasNext: boolean
+  /** The tracks after Now playing: 5 while the catalogue has fresh tracks to add. */
+  upNext: readonly CatalogueTrack[]
+  /** Tracks played this session, in order, each once. Only grows until Start new queue. */
+  heard: readonly CatalogueTrack[]
   togglePlay(): void
   previous(): void
   next(): void
   /** Plays the track at this position in the queue (e.g. replaying a Heard track). */
   playAt(index: number): void
+  /** Plays this track from the queue (e.g. a Heard or Up next click). */
+  playTrack(track: CatalogueTrack): void
+  /** Ends the session: empties Heard, rebuilds the queue from the first track and plays it. */
+  startNewQueue(): void
   seek(positionMs: number): void
   /** 0 to 1; 0 while muted. */
   volume: number
@@ -51,7 +62,9 @@ type ProviderProps = {
 export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children }: ProviderProps) {
   const [connection, setConnection] = useState<ConnectedPlayer | null>(null)
   const playerRef = useRef<Player | null>(null)
-  const [queue, setQueue] = useState<Queue<CatalogueTrack>>(() => createQueue(tracks))
+  const choose = useMemo(() => catalogueChooser(tracks), [tracks])
+  const [queue, setQueue] = useState<Queue<CatalogueTrack>>(() => topUp(createQueue([]), catalogueChooser(tracks)))
+  const [heard, setHeard] = useState<readonly CatalogueTrack[]>([])
   // Engine events read the ref, because they're subscribed once; the state re-renders.
   const queueRef = useRef(queue)
   /** The track the engine was last told to play, so Play knows whether to start or resume. */
@@ -79,11 +92,20 @@ export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children
     [setVolume],
   )
 
-  /** Moves the cursor and plays the track there. A move past either end changes nothing. */
-  const moveCursorAndPlay = useCallback((target: Queue<CatalogueTrack>) => {
+  /**
+   * Moves the cursor and plays the track there, topping up Up next and recording the track left as Heard.
+   * A move past either end changes nothing. `restart` (Start new queue) plays even if the cursor didn't move
+   * and starts Heard afresh.
+   */
+  const moveCursorAndPlay = useCallback((moved: Queue<CatalogueTrack>, restart = false) => {
     const player = playerRef.current
+    if (!player || (moved === queueRef.current && !restart)) return
+    const target = topUp(moved, choose)
     const track = nowPlaying(target)
-    if (!player || !track || target === queueRef.current) return
+    if (!track) return
+    const left = nowPlaying(queueRef.current)
+    if (restart) setHeard([])
+    else if (left && moved.cursor !== queueRef.current.cursor) setHeard((h) => recordHeard(h, left))
     queueRef.current = target
     setQueue(target)
     setLoadedId(track.id)
@@ -92,7 +114,7 @@ export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children
     setArtworkUrl(null)
     player.play(track.id)
     setPlaying(true)
-  }, [])
+  }, [choose])
 
   useEffect(() => {
     let cancelled = false
@@ -165,10 +187,17 @@ export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children
       durationMs: (loaded && engineDurationMs) || (playingTrack?.durationMs ?? 0),
       hasPrevious: hasPrevious(queue),
       hasNext: hasNext(queue),
+      upNext: upNext(queue),
+      heard,
       togglePlay,
       previous: () => moveCursorAndPlay(previous(queueRef.current)),
       next: () => moveCursorAndPlay(next(queueRef.current)),
-      playAt: (index) => moveCursorAndPlay(jumpTo(queueRef.current, index)),
+      playAt: (index) => moveCursorAndPlay(jumpToSkipping(queueRef.current, index, heard)),
+      playTrack: (track) => {
+        const index = queueRef.current.tracks.findIndex((t) => t.id === track.id)
+        if (index >= 0) moveCursorAndPlay(jumpToSkipping(queueRef.current, index, heard))
+      },
+      startNewQueue: () => moveCursorAndPlay(topUp(createQueue([]), choose), true),
       seek,
       volume,
       muted: volume === 0,
@@ -176,7 +205,7 @@ export function PlaybackProvider({ tracks, connect, logIn = startLogIn, children
       toggleMute,
       logIn,
     }),
-    [connection, queue, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
+    [connection, queue, heard, choose, playingTrack, loaded, artworkUrl, playing, positionMs, engineDurationMs, togglePlay, moveCursorAndPlay, seek, volume, setVolume, toggleMute, logIn],
   )
 
   return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>

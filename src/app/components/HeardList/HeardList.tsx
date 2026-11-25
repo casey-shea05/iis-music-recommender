@@ -3,7 +3,7 @@ import { cn } from '@/shadcn/utils.ts'
 import { TrackRow } from '../TrackRow/TrackRow.tsx'
 
 /** Tracks already played this session, in the order they were heard. Fills its parent and scrolls when long. */
-export function HeardList({ tracks, onSelect }: { tracks: CatalogueTrack[]; onSelect: (track: CatalogueTrack) => void }) {
+export function HeardList({ tracks, onSelect }: { tracks: readonly CatalogueTrack[]; onSelect: (track: CatalogueTrack) => void }) {
   const empty = tracks.length === 0
   return (
     <section
