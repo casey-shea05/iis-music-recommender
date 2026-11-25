@@ -25,6 +25,8 @@ function PanelBody({ track, onSubmit }: Props) {
   const [artist, setArtist] = useState(false)
   const [text, setText] = useState('')
   const disabled = !track || !nowPlaying
+  // With nothing given, Submit still dislikes the track; say so, since a reason looks required.
+  const hasReason = Object.keys(picked).length > 0 || artist || text.trim() !== ''
 
   function toggle(feature: FeatureName, direction: Direction) {
     setPicked((p) => {
@@ -40,9 +42,6 @@ function PanelBody({ track, onSubmit }: Props) {
     })
     if (artist) reasons.push({ kind: 'artist' })
     onSubmit(reasons, text)
-    setPicked({})
-    setArtist(false)
-    setText('')
   }
 
   return (
@@ -75,7 +74,7 @@ function PanelBody({ track, onSubmit }: Props) {
         className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
       />
       <Button disabled={disabled} onClick={submit}>
-        Submit
+        {hasReason ? 'Submit' : 'Dislike without a reason'}
       </Button>
     </section>
   )

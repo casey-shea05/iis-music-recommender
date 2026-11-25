@@ -7,7 +7,7 @@ import type { Player } from '@/playback/player.ts'
 import type { ArtistRef, CatalogueTrack, Features } from '@/recommender/catalogue.ts'
 import { explain, type Explanation } from '@/recommender/scoring.ts'
 import {
-  catalogueChooser, createQueue, hasNext, hasPrevious, jumpToSkipping, next, nowPlaying, previous, recordHeard, remove, removeHeard, topUp, upNext,
+  catalogueChooser, createQueue, dropExcluded, hasNext, hasPrevious, jumpToSkipping, next, nowPlaying, previous, recordHeard, remove, removeHeard, topUp, upNext,
   type Chooser, type Queue,
 } from '@/recommender/queue.ts'
 
@@ -40,8 +40,11 @@ export type Playback = {
   playAt(index: number): void
   /** Plays this track from the queue (e.g. a Heard or Up next click). */
   playTrack(track: CatalogueTrack): void
-  /** Removes Now playing from the queue and from Heard (it is never recorded), plays the track below and tops up. */
-  removeNowPlaying(): void
+  /**
+   * Removes Now playing from the queue and from Heard (it is never recorded), plays the track below and tops up.
+   * Unheard Up next tracks that `isExcluded` (e.g. a newly blocked artist) are dropped first.
+   */
+  removeNowPlaying(isExcluded?: (track: CatalogueTrack) => boolean): void
   /** Ends the session: empties Heard, rebuilds the queue from the first track and plays it. */
   startNewQueue(): void
   seek(positionMs: number): void
@@ -210,10 +213,10 @@ export function PlaybackProvider({ tracks, profile, chooser, connect, logIn = st
         const index = queueRef.current.tracks.findIndex((t) => t.id === track.id)
         if (index >= 0) moveCursorAndPlay(jumpToSkipping(queueRef.current, index, heard))
       },
-      removeNowPlaying: () => {
-        const current = queueRef.current
-        const removed = nowPlaying(current)
+      removeNowPlaying: (isExcluded) => {
+        const removed = nowPlaying(queueRef.current)
         if (!removed) return
+        const current = isExcluded ? dropExcluded(queueRef.current, heard, isExcluded, choose) : queueRef.current
         setHeard((h) => removeHeard(h, removed.id))
         const after = remove(current, current.cursor)
         if (nowPlaying(topUp(after, choose))) return moveCursorAndPlay(after)

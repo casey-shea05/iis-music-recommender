@@ -62,12 +62,12 @@ export function effects(dislikes: Dislike[]): Adjustment[] {
 }
 
 /** The primary artists blocked by a "Not a fan of this artist" reason. */
-export function blockedArtistIds(dislikes: Dislike[]): Set<string> {
+export function blockedArtistIds(dislikes: readonly Dislike[]): Set<string> {
   return new Set(dislikes.filter((d) => d.reasons.some((r) => r.kind === 'artist')).map((d) => d.track.artists[0].id))
 }
 
 /** True for disliked tracks and any track crediting a blocked artist. */
-export function isExcluded(track: CatalogueTrack, dislikes: Dislike[]): boolean {
+export function isExcluded(track: CatalogueTrack, dislikes: readonly Dislike[]): boolean {
   const blocked = blockedArtistIds(dislikes)
   return dislikes.some((d) => d.track.id === track.id) || track.artists.some((a) => blocked.has(a.id))
 }

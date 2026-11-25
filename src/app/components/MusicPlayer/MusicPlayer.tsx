@@ -13,11 +13,23 @@ import { SeekBar } from './components/SeekBar/SeekBar.tsx'
 import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
 import { Transport } from './components/Transport/Transport.tsx'
 import { VolumeControl } from './components/VolumeControl/VolumeControl.tsx'
+import { useDislikes } from '@/hooks/useDislikes.tsx'
+import { isExcluded, type Reason } from '@/recommender/dislikes.ts'
 import { reasonConfirmationText } from '@/utils/reasonConfirmationText.ts'
 
 export function MusicPlayer() {
   const [expanded, setExpanded] = useState(false)
-  const { upNext, playTrack, nowPlaying } = usePlayback()
+  const { upNext, playTrack, nowPlaying, removeNowPlaying } = usePlayback()
+  const { add, getDislikes } = useDislikes()
+
+  function dislike(reasons: Reason[], text: string) {
+    if (!nowPlaying) return
+    const typed = text.trim()
+    add({ track: nowPlaying, reasons: typed ? [...reasons, { kind: 'text', text: typed }] : reasons })
+    // The dislike is recorded first, so the queue's chooser already skips it when topping up.
+    removeNowPlaying((track) => isExcluded(track, getDislikes()))
+    toast(reasonConfirmationText(reasons, text))
+  }
 
   if (expanded) {
     return (
@@ -51,8 +63,7 @@ export function MusicPlayer() {
             <div className="min-h-0 overflow-y-auto">
               <UpNextList tracks={upNext} onSelect={playTrack} />
             </div>
-            {/* Stub: Task 4 replaces the toast-only submit with recording the dislike. */}
-            <ReasonPanel track={nowPlaying} onSubmit={(reasons, text) => toast(reasonConfirmationText(reasons, text))} />
+            <ReasonPanel track={nowPlaying} onSubmit={dislike} />
           </div>
         </div>
         <ExplanationText variant="expanded" />
