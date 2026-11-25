@@ -19,6 +19,8 @@ import {
 const RECCOBEATS = 'https://api.reccobeats.com/v1'
 const RECS_PER_SEED = 20
 const FEATURE_BATCH = 40
+const IMAGE_BATCH = 50 // Spotify's limit for GET /tracks
+const IMAGE_SIZE = 300
 
 // Same variables the browser app reads, so one .env serves both.
 const clientId = process.env.SPOTIFY_CLIENT_ID
@@ -230,6 +232,31 @@ async function fetchFeatures(ids: string[]): Promise<Record<string, Features>> {
   return features
 }
 
+// Spotify album art, by track ID. A batch that fails is skipped: those tracks just get no image.
+async function fetchImages(accessToken: string, ids: string[]): Promise<Record<string, string>> {
+  const headers = { Authorization: `Bearer ${accessToken}` }
+  const images: Record<string, string> = {}
+  for (let i = 0; i < ids.length; i += IMAGE_BATCH) {
+    const batch = ids.slice(i, i + IMAGE_BATCH)
+    try {
+      const { tracks } = await getJson<{
+        tracks: ({ id: string; album: { images: { url: string; width?: number | null }[] } } | null)[]
+      }>(`https://api.spotify.com/v1/tracks?ids=${batch.join(',')}`, headers)
+      for (const t of tracks) {
+        // The image closest to IMAGE_SIZE: sharp enough for the player, not wasteful for the list rows.
+        const [best] = [...(t?.album.images ?? [])].sort(
+          (a, b) => Math.abs((a.width ?? 0) - IMAGE_SIZE) - Math.abs((b.width ?? 0) - IMAGE_SIZE),
+        )
+        if (t && best) images[t.id] = best.url
+      }
+    } catch (error) {
+      console.warn(`  images batch at ${i} skipped (${error instanceof Error ? error.message.slice(0, 120) : error})`)
+    }
+    await sleep(200)
+  }
+  return images
+}
+
 // --- Main ---
 
 const accessToken = await login()
@@ -271,14 +298,21 @@ const recIds = [...new Set(recommendations.flatMap((r) => r.tracks.map((t) => t.
 console.log(`Fetching ReccoBeats features for ${recIds.length} recommended tracks...`)
 Object.assign(features, await fetchFeatures(recIds))
 
+const imageIds = Object.keys(features)
+console.log(`Fetching Spotify images for ${imageIds.length} tracks...`)
+const images = await fetchImages(accessToken, imageIds)
+
 const catalogue = buildCatalogue({
   topTracks: seeds,
   topArtists,
   recommendations,
   features,
+  images,
   generatedAt: new Date().toISOString(),
 })
 
 mkdirSync('data', { recursive: true })
 writeFileSync('data/catalogue.json', JSON.stringify(catalogue, null, 2) + '\n')
+const withoutImage = catalogue.tracks.filter((t) => !t.imageUrl).length
+if (withoutImage > 0) console.warn(`  ${withoutImage} tracks have no image and will show a placeholder`)
 console.log(`Wrote data/catalogue.json with ${catalogue.tracks.length} tracks.`)

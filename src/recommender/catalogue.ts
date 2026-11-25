@@ -25,6 +25,8 @@ export type CatalogueTrack = {
   anchorArtistId: string
   /** True if the track came from the user's Spotify top tracks rather than a recommendation. */
   isTopTrack: boolean
+  /** The album image (~300px) from Spotify, or null if it has none: the UI shows a placeholder. */
+  imageUrl: string | null
 }
 
 export type Catalogue = {

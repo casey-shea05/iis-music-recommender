@@ -98,6 +98,21 @@ describe('buildCatalogue', () => {
     ])
   })
 
+  it('gives each track its image, or null (keeping the track) when it has none', () => {
+    const catalogue = buildCatalogue({
+      topTracks: [track('t1', 'A1')],
+      topArtists,
+      recommendations: [{ seedTrackId: 't1', tracks: [track('r1', 'X9')] }],
+      features: { t1: f(100), r1: f(90) },
+      images: { t1: 'https://img.test/t1.jpg' },
+      generatedAt,
+    })
+    expect(catalogue.tracks.map((t) => [t.id, t.imageUrl])).toEqual([
+      ['t1', 'https://img.test/t1.jpg'],
+      ['r1', null],
+    ])
+  })
+
   it('drops tracks with no features', () => {
     const catalogue = buildCatalogue({
       topTracks: [track('t1', 'A1')],

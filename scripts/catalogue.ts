@@ -71,9 +71,11 @@ export function buildCatalogue(input: {
   topArtists: ArtistRef[]
   recommendations: Recommendation[]
   features: Record<string, Features>
+  /** Image URL by Spotify track ID. A track missing here is kept, with no image. */
+  images?: Record<string, string>
   generatedAt: string
 }): Catalogue {
-  const { topTracks, topArtists, recommendations, features, generatedAt } = input
+  const { topTracks, topArtists, recommendations, features, images = {}, generatedAt } = input
   const topArtistIds = new Set(topArtists.map((a) => a.id))
 
   // The anchor artist is the top artist behind the seed track, else the seed's own first artist.
@@ -84,7 +86,13 @@ export function buildCatalogue(input: {
   const add = (track: SpotifyTrack, anchorArtistId: string | undefined, isTopTrack: boolean) => {
     const trackFeatures = features[track.id]
     if (!anchorArtistId || !trackFeatures || tracks.has(track.id)) return
-    tracks.set(track.id, { ...track, features: trackFeatures, anchorArtistId, isTopTrack })
+    tracks.set(track.id, {
+      ...track,
+      features: trackFeatures,
+      anchorArtistId,
+      isTopTrack,
+      imageUrl: images[track.id] ?? null,
+    })
   }
 
   for (const top of topTracks) add(top, anchorFor(top), true)

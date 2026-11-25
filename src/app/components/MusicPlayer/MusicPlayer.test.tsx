@@ -46,6 +46,16 @@ describe('MusicPlayer', () => {
     expect(screen.getByRole('img', { name: 'Alpha artwork' })).toHaveAttribute('src', 'https://example.test/a.jpg')
   })
 
+  it('prefers the catalogue image over the engine’s', async () => {
+    const withImage = [makeTrack({ id: 'a', title: 'Alpha', imageUrl: 'https://img.test/a.jpg', durationMs: 2000 })]
+    await renderWithPlayback(<MusicPlayer />, {
+      tracks: withImage,
+      connection: { mode: 'spotify', player: withArtwork(new FakePlayer(withImage)) },
+    })
+    fireEvent.click(button('Play'))
+    expect(screen.getByRole('img', { name: 'Alpha artwork' })).toHaveAttribute('src', 'https://img.test/a.jpg')
+  })
+
   it('plays, pauses and moves through the queue', async () => {
     await renderWithPlayback(<MusicPlayer />, { tracks })
     expect(button('Previous')).toBeDisabled()
