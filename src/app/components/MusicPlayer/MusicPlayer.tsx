@@ -1,20 +1,23 @@
 // The player: a persistent bottom bar that expands to a full-screen Now playing view.
 // Both views read the same playback state, so nothing is lost when switching between them.
-import { ChevronDown, Maximize2 } from 'lucide-react'
+import { ChevronDown, Maximize2, ThumbsDown } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/shadcn/button.tsx'
 import { UpNextList } from './components/UpNextList/UpNextList.tsx'
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { Artwork } from './components/Artwork/Artwork.tsx'
 import { ExplanationText } from './components/ExplanationText/ExplanationText.tsx'
+import { ReasonPanel } from './components/ReasonPanel/ReasonPanel.tsx'
 import { SeekBar } from './components/SeekBar/SeekBar.tsx'
 import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
 import { Transport } from './components/Transport/Transport.tsx'
 import { VolumeControl } from './components/VolumeControl/VolumeControl.tsx'
+import { reasonConfirmationText } from '@/utils/reasonConfirmationText.ts'
 
 export function MusicPlayer() {
   const [expanded, setExpanded] = useState(false)
-  const { upNext, playTrack } = usePlayback()
+  const { upNext, playTrack, nowPlaying } = usePlayback()
 
   if (expanded) {
     return (
@@ -22,18 +25,19 @@ export function MusicPlayer() {
         role="dialog"
         aria-modal
         aria-label="Now playing"
-        className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-background animate-in slide-in-from-bottom duration-300"
+        className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-background animate-in slide-in-from-bottom duration-300"
       >
-        <div className="flex items-center justify-between p-4">
+        <div className="flex shrink-0 items-center justify-between px-4 pt-3">
           <Button variant="ghost" size="icon" aria-label="Collapse player" onClick={() => setExpanded(false)}>
             <ChevronDown />
           </Button>
           <span className="text-sm text-muted-foreground">Now playing</span>
           <div className="size-9" />
         </div>
-        <div className="mx-auto grid w-full max-w-5xl flex-1 gap-8 p-6 md:grid-cols-2">
-          <div className="flex flex-col items-center justify-center gap-6">
-            <Artwork className="aspect-square w-full max-w-sm rounded-xl" />
+        <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 gap-8 p-4 md:grid-cols-2">
+          <div className="flex min-h-0 flex-col items-center justify-center gap-4">
+            {/* Sized from the viewport height, so the whole view fits one screen at any zoom. */}
+            <Artwork className="aspect-square h-[min(24rem,46dvh)] w-auto rounded-xl" />
             <TrackInfo variant="expanded" className="w-full max-w-sm text-center" />
             <div className="w-full max-w-sm">
               <SeekBar variant="expanded" />
@@ -41,9 +45,14 @@ export function MusicPlayer() {
             <Transport variant="expanded" />
             <VolumeControl variant="expanded" />
           </div>
-          {/* Right half: Up next on top; the lower quarter is left for IIS-28's dislike, reasons and Active reasons (Heard now lives on the main page). */}
-          <div className="flex flex-col gap-6">
-            <UpNextList tracks={upNext} onSelect={playTrack} />
+          {/* Right half: Up next on top, the reason panel below it (Heard lives on the main page). */}
+          <div className="flex min-h-0 flex-col justify-center gap-4">
+            {/* Up next gives way first: it scrolls inside itself when the screen is short. */}
+            <div className="min-h-0 overflow-y-auto">
+              <UpNextList tracks={upNext} onSelect={playTrack} />
+            </div>
+            {/* Stub: Task 4 replaces the toast-only submit with recording the dislike. */}
+            <ReasonPanel track={nowPlaying} onSubmit={(reasons, text) => toast(reasonConfirmationText(reasons, text))} />
           </div>
         </div>
         <ExplanationText variant="expanded" />
@@ -64,6 +73,9 @@ export function MusicPlayer() {
         </div>
         <Transport />
         <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" aria-label="Dislike this track" disabled={!nowPlaying} onClick={() => setExpanded(true)}>
+            <ThumbsDown />
+          </Button>
           <VolumeControl />
           <Button variant="ghost" size="icon" aria-label="Expand player" onClick={() => setExpanded(true)}>
             <Maximize2 />

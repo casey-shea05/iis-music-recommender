@@ -4,12 +4,16 @@
 What a user gives after disliking a track to say why it missed: a chip or free text. Each reason belongs to the track it was given on.
 _Avoid_: feedback, rating
 
+**Reason panel**
+The always-present panel in the expanded player where the user picks reasons for Now playing and submits them. Submitting with nothing picked is a Dislike with no reasons. Nothing is recorded until Submit, and the panel resets whenever Now playing changes.
+_Avoid_: reason prompt, dislike dialog
+
 **Dislike**
-The record of a track the user rejected, with any reasons given on it (none is allowed). While the record exists the track can't come up again. Removing it drops all its reasons and lets the track come up again.
+The record of a track the user rejected, with any reasons given on it (none is allowed). It is created when the user submits the Reason panel, and the track leaves the queue and Heard at that moment. While the record exists the track can't come up again. Removing it drops all its reasons and lets the track come up again.
 _Avoid_: thumbs-down, ban
 
 **Adjustment**
-What a reason is interpreted into: a direction on one feature (e.g. tempo up) or a block on an artist. Each adjustment has a scope: this session or long-term. One reason can produce several adjustments.
+What a reason is interpreted into: a direction on one feature (e.g. tempo up) or a block on an artist. Its scope follows the kind of reason: blocking an artist is long-term, everything else lasts this session. One reason can produce several adjustments.
 _Avoid_: rule, filter, preference
 
 **Effect**
@@ -45,7 +49,7 @@ The tracks after the cursor, waiting to be played.
 _Avoid_: upcoming, backlog
 
 **Heard**
-The record of tracks already played in this session. It only grows until the session ends: moving the cursor back to a Heard track doesn't remove anything from it, so a track can be both Heard and Up next.
+The record of tracks already played in this session. It only grows until the session ends, with one exception: disliking a track removes it from Heard too. Moving the cursor back to a Heard track doesn't remove anything from it, so a track can be both Heard and Up next.
 _Avoid_: history, played
 
 **Fresh track**
