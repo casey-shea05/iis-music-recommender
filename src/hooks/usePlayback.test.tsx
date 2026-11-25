@@ -203,4 +203,17 @@ describe('session: Heard and Start new queue', () => {
     act(() => result.current.startNewQueue())
     expect(play).toHaveBeenCalledWith('a')
   })
+
+  it('removeNowPlaying plays the track below without recording the removed one, and drops a replayed one from Heard', async () => {
+    const { result, player } = await connected()
+    act(() => result.current.togglePlay())
+    act(() => result.current.next())
+    act(() => result.current.previous()) // replay Alpha; Heard = [Alpha, Bravo]
+    const play = vi.spyOn(player, 'play')
+    act(() => result.current.removeNowPlaying())
+    expect(result.current.nowPlaying?.id).toBe('b')
+    expect(play).toHaveBeenCalledWith('b')
+    expect(result.current.heard.map((t) => t.id)).toEqual(['b'])
+    expect(result.current.hasPrevious).toBe(false)
+  })
 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { catalogueChooser, createQueue, hasNext, hasPrevious, jumpTo, jumpToSkipping, next, nowPlaying, previous, recordHeard, topUp, upNext } from './queue.ts'
+import { catalogueChooser, createQueue, hasNext, hasPrevious, jumpTo, jumpToSkipping, next, nowPlaying, previous, recordHeard, remove, removeHeard, dropExcluded, topUp, upNext } from './queue.ts'
 
 const tracks = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
 
@@ -86,5 +86,32 @@ describe('jumping forward over Up next tracks', () => {
   it('keeps skipped tracks that are already Heard', () => {
     const q = createQueue([{ id: 'a' }, { id: 'b' }, { id: 'c' }])
     expect(ids(jumpToSkipping(q, 2, [{ id: 'b' }]))).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('removing tracks', () => {
+  const ids = (q: { tracks: readonly { id: string }[] }) => q.tracks.map((t) => t.id)
+  const q = jumpTo(createQueue([{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }]), 1)
+
+  it('removing Now playing leaves the cursor on the track below', () => {
+    const r = remove(q, 1)
+    expect(ids(r)).toEqual(['a', 'c', 'd'])
+    expect(nowPlaying(r)).toEqual({ id: 'c' })
+  })
+
+  it('removing a Heard track keeps Now playing; removing an Up next track keeps the cursor', () => {
+    expect(nowPlaying(remove(q, 0))).toEqual({ id: 'b' })
+    expect(nowPlaying(remove(q, 3))).toEqual({ id: 'b' })
+  })
+
+  it('removes a track from Heard', () => {
+    expect(removeHeard([{ id: 'a' }, { id: 'b' }], 'a')).toEqual([{ id: 'b' }])
+  })
+
+  it('dropExcluded drops unheard excluded Up next tracks and tops up, keeping Now playing and Heard ones', () => {
+    const catalogue = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((id) => ({ id }))
+    const queue = jumpTo(createQueue(catalogue.slice(0, 4)), 1)
+    const out = dropExcluded(queue, [{ id: 'd' }], (t) => ['b', 'c', 'd'].includes(t.id), catalogueChooser(catalogue.filter((t) => t.id > 'd')))
+    expect(ids(out)).toEqual(['a', 'b', 'd', 'e', 'f', 'g'])
   })
 })

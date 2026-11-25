@@ -88,3 +88,33 @@ export function jumpToSkipping<T extends { id: string }>(
     cursor: queue.cursor + 1 + keptSkipped.length,
   }
 }
+
+/** Drops the track at `index`. Removing Now playing leaves the cursor on the track below it. Out-of-range indexes are ignored. */
+export function remove<T>(queue: Queue<T>, index: number): Queue<T> {
+  const inRange = Number.isInteger(index) && index >= 0 && index < queue.tracks.length
+  if (!inRange) return queue
+  return {
+    tracks: queue.tracks.filter((_, i) => i !== index),
+    cursor: index < queue.cursor ? queue.cursor - 1 : queue.cursor,
+  }
+}
+
+/** Takes a track out of Heard (a Dislike removes it from Heard too). */
+export function removeHeard<T extends { id: string }>(heard: readonly T[], trackId: string): readonly T[] {
+  return heard.filter((t) => t.id !== trackId)
+}
+
+/**
+ * Drops the unheard Up next tracks that are excluded (e.g. by a newly blocked artist), then tops up so the gap
+ * is filled straight away. Heard tracks stay, even in Up next after a replay, and so does Now playing.
+ */
+export function dropExcluded<T extends { id: string }>(
+  queue: Queue<T>,
+  heard: readonly T[],
+  isExcluded: (track: T) => boolean,
+  choose: Chooser<T>,
+): Queue<T> {
+  const heardIds = new Set(heard.map((t) => t.id))
+  const tracks = queue.tracks.filter((t, i) => i <= queue.cursor || heardIds.has(t.id) || !isExcluded(t))
+  return topUp({ ...queue, tracks }, choose)
+}
