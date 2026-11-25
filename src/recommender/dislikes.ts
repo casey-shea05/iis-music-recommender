@@ -62,13 +62,13 @@ export function effects(dislikes: readonly Dislike[]): Adjustment[] {
 export type BlockedArtist = {
   id: string
   name: string
-  tracks: { id: string; title: string }[]
+  tracks: { id: string; title: string; imageUrl?: string | null }[]
 }
 
 /** Blocks the track's primary artist, or adds the track to the artist's existing block. */
 export function blockArtist(blocked: BlockedArtist[], track: CatalogueTrack): BlockedArtist[] {
   const { id, name } = track.artists[0]
-  const source = { id: track.id, title: track.title }
+  const source = { id: track.id, title: track.title, imageUrl: track.imageUrl }
   const existing = blocked.find((b) => b.id === id)
   if (!existing) return [...blocked, { id, name, tracks: [source] }]
   if (existing.tracks.some((t) => t.id === track.id)) return blocked
@@ -95,4 +95,12 @@ export function unblockArtist(
 /** True for disliked tracks and any track crediting a blocked artist. */
 export function isExcluded(track: CatalogueTrack, dislikes: readonly Dislike[], blocked: readonly BlockedArtist[]): boolean {
   return dislikes.some((d) => d.track.id === track.id) || track.artists.some((a) => blocked.some((b) => b.id === a.id))
+}
+
+/**
+ * The dislikes the Dislikes panel lists. One whose only reason is "Not a fan of this artist" lives in Blocked
+ * artists instead; a dislike with no reasons, or with other reasons too, is listed.
+ */
+export function listedDislikes(dislikes: readonly Dislike[]): Dislike[] {
+  return dislikes.filter((d) => d.reasons.length === 0 || d.reasons.some((r) => r.kind !== 'artist'))
 }

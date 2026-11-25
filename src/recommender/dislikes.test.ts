@@ -24,7 +24,7 @@ describe('dislikes', () => {
 
   it('adds a block for the primary artist, with the track that blocked them', () => {
     const once = blockArtist([], blockedTrack)
-    expect(once).toEqual([{ ...artist, tracks: [{ id: 'b', title: blockedTrack.title }] }])
+    expect(once).toEqual([{ ...artist, tracks: [{ id: 'b', title: blockedTrack.title, imageUrl: blockedTrack.imageUrl }] }])
     expect(blockArtist(once, makeTrack({ id: 'b2', artists: [artist] }))[0].tracks).toHaveLength(2)
   })
 

@@ -14,7 +14,7 @@ export function TrackThumbnail({
   className,
   iconClassName,
 }: {
-  track: CatalogueTrack
+  track: Pick<CatalogueTrack, 'id' | 'imageUrl'>
   imageUrl?: string | null
   alt?: string
   className?: string
