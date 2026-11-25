@@ -2,9 +2,15 @@
 
 A music recommender prototype in which each track explains why it was chosen, and the listener can answer that explanation with a reason for disliking it (for example "Too slow"). The reason steers what plays next, and the listener can see and undo its effects. Built for the Intelligent Interactive Systems module, Assignment 2.
 
-**Prose word count:** 1,468 (including headings and tables; excluding code, setup commands and link addresses)
+**Prose word count:** 1,492 (including headings and tables; excluding code, setup commands and link addresses)
 **Submitted version:** [`v1.0`](https://github.com/casey-shea05/iis-music-recommender/releases/tag/v1.0)
 **Setup:** [docs/SETUP.md](docs/SETUP.md). It runs without any keys.
+
+![The main screen: tracks heard this session above the player bar, with the explanation strip underneath](submissions/report/screenshots/raw/16-heard-list-collapsed-player.jpg)
+*The main screen: the Heard list, the player bar and the explanation strip.*
+
+![The expanded player: Now playing, Up next and the reason panel with its chips](submissions/report/screenshots/raw/01-explanation-and-up-next-before.jpg)
+*The expanded player: Now playing, Up next and the reason panel.*
 
 ## Project status
 
