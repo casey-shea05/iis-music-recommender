@@ -6,8 +6,10 @@ import { PlaybackProvider, usePlayback } from '@/hooks/usePlayback.tsx'
 import type { ConnectedPlayer } from '@/playback/connectPlayer.ts'
 import { FakePlayer } from '@/playback/fakePlayer.ts'
 import type { CatalogueTrack } from '@/recommender/catalogue.ts'
-import { isExcluded } from '@/recommender/dislikes.ts'
-import { catalogueChooser } from '@/recommender/queue.ts'
+import { effects, isExcluded } from '@/recommender/dislikes.ts'
+import { catalogueChooser, type Queue } from '@/recommender/queue.ts'
+import { score } from '@/recommender/scoring.ts'
+import { swap } from '@/recommender/swap.ts'
 
 /** A catalogue track for tests. Only the fields a test cares about need setting. */
 export function makeTrack(overrides: Partial<CatalogueTrack> & { id: string }): CatalogueTrack {
@@ -59,5 +61,12 @@ function Playback({ tracks, ...props }: ComponentProps<typeof PlaybackProvider>)
       catalogueChooser(tracks.filter((t) => !isExcluded(t, getDislikes())))(queued, count),
     [tracks, getDislikes],
   )
-  return <PlaybackProvider tracks={tracks} chooser={chooser} {...props} />
+  // Scores against a profile of the default fixture features, so a track nearer them ranks higher.
+  const steer = useMemo(
+    () => (queue: Queue<CatalogueTrack>, heard: readonly CatalogueTrack[]) =>
+      swap(queue, heard, effects([...getDislikes()]), (t) => isExcluded(t, getDislikes()), tracks, (t, adj) =>
+        score(t, makeTrack({ id: 'profile' }).features, new Set(), adj)),
+    [tracks, getDislikes],
+  )
+  return <PlaybackProvider tracks={tracks} chooser={chooser} steer={steer} {...props} />
 }

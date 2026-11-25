@@ -1,8 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ConnectedPlayer } from '@/playback/connectPlayer.ts'
 import { FakePlayer } from '@/playback/fakePlayer.ts'
+import type { CatalogueTrack } from '@/recommender/catalogue.ts'
+import type { Queue } from '@/recommender/queue.ts'
 import { makeTrack } from '@/testFixtures.tsx'
 import { PlaybackProvider, usePlayback } from './usePlayback.tsx'
 
@@ -12,21 +14,21 @@ const tracks = [
   makeTrack({ id: 'c', title: 'Charlie', durationMs: 2000 }),
 ]
 
-function setup(connected?: Partial<ConnectedPlayer>) {
+function setup(connected?: Partial<ConnectedPlayer>, steer?: ComponentProps<typeof PlaybackProvider>['steer']) {
   const player = new FakePlayer(tracks)
   const connect = vi.fn(async (): Promise<ConnectedPlayer> =>
     ({ mode: 'fake', reason: 'logged-out', player, ...connected }) as ConnectedPlayer,
   )
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <PlaybackProvider tracks={tracks} connect={connect}>
+    <PlaybackProvider tracks={tracks} connect={connect} steer={steer}>
       {children}
     </PlaybackProvider>
   )
   return { player: (connected?.player ?? player) as FakePlayer, ...renderHook(() => usePlayback(), { wrapper }) }
 }
 
-async function connected(connected?: Partial<ConnectedPlayer>) {
-  const rendered = setup(connected)
+async function connected(connected?: Partial<ConnectedPlayer>, steer?: ComponentProps<typeof PlaybackProvider>['steer']) {
+  const rendered = setup(connected, steer)
   await waitFor(() => expect(rendered.result.current.status).not.toBe('connecting'))
   return rendered
 }
@@ -215,5 +217,15 @@ describe('session: Heard and Start new queue', () => {
     expect(play).toHaveBeenCalledWith('b')
     expect(result.current.heard.map((t) => t.id)).toEqual(['b'])
     expect(result.current.hasPrevious).toBe(false)
+  })
+
+  it('removeNowPlaying steers the queue in the same change, after removing Now playing', async () => {
+    const swapped = makeTrack({ id: 'z', title: 'Zulu' })
+    const steer = vi.fn((queue: Queue<CatalogueTrack>) => ({ ...queue, tracks: queue.tracks.map((t) => (t.id === 'c' ? swapped : t)) }))
+    const { result } = await connected(undefined, steer)
+    act(() => result.current.removeNowPlaying())
+    expect(steer.mock.calls[0][0].tracks.map((t) => t.id)).toEqual(['b', 'c', 'a'])
+    expect(result.current.nowPlaying?.id).toBe('b')
+    expect(result.current.upNext[0].id).toBe('z')
   })
 })

@@ -50,3 +50,24 @@ describe('disliking from the Reason panel', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument() // Alpha's dislike ended with the session
   })
 })
+
+describe('steering Up next after a dislike', () => {
+  beforeEach(() => localStorage.clear())
+  const slow = (id: string, tempo: number) => makeTrack({ id, title: id, features: { tempo, energy: 0.5, valence: 0.5, acousticness: 0.5 } })
+
+  it('replaces a slow unheard Up next track with a faster candidate', async () => {
+    // After Alpha goes, the top-up pulls in Fast, so Fast2 is the only candidate left to replace Slow.
+    const tracks = [slow('Alpha', 100), slow('Mid', 120), slow('Slow', 70), slow('M1', 120), slow('M2', 120), slow('M3', 120), slow('Fast', 115), slow('Fast2', 118)]
+    await renderWithPlayback(<App />, { tracks })
+    dislikeWith('Too slow')
+    expect(screen.queryByText('Slow')).not.toBeInTheDocument()
+    expect(screen.getByText('Fast2')).toBeInTheDocument()
+  })
+
+  it('changes nothing when no candidate scores higher', async () => {
+    const tracks = [slow('Alpha', 100), slow('Mid', 120), slow('Slow', 70), slow('M1', 120), slow('M2', 120), slow('M3', 120), slow('Fast', 115)]
+    await renderWithPlayback(<App />, { tracks })
+    dislikeWith('Too slow')
+    expect(screen.getByText('Slow')).toBeInTheDocument()
+  })
+})
