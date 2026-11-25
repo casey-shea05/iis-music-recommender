@@ -6,8 +6,11 @@ import type { FeatureName } from './scoring.ts'
 
 export type Direction = 'higher' | 'lower'
 
-/** A chip the user picked: one side of a feature ("Too slow" = tempo higher), or blocking the artist. */
-export type Reason = { kind: 'feature'; feature: FeatureName; direction: Direction } | { kind: 'artist' }
+/**
+ * A chip the user picked (one side of a feature, "Too slow" = tempo higher, or blocking the artist), or their own
+ * words. Typed text is stored and listed, but `effects()` ignores it.
+ */
+export type Reason = { kind: 'feature'; feature: FeatureName; direction: Direction } | { kind: 'artist' } | { kind: 'text'; text: string }
 
 /** A disliked track and the reasons given for it (none is allowed). */
 export type Dislike = {
@@ -22,9 +25,9 @@ export type Adjustment = {
   threshold: number
 }
 
-/** The chip → adjustment table. The artist chip has no adjustment: it is a block, see `blockedArtistIds`. */
+/** The chip → adjustment table. The artist chip is a block (see `blockedArtistIds`) and typed text doesn't steer yet. */
 export function adjustmentFor(track: CatalogueTrack, reason: Reason): Adjustment | null {
-  if (reason.kind === 'artist') return null
+  if (reason.kind !== 'feature') return null
   return { feature: reason.feature, direction: reason.direction, threshold: track.features[reason.feature] }
 }
 
@@ -36,6 +39,14 @@ export function addDislike(dislikes: Dislike[], dislike: Dislike): Dislike[] {
 /** Removes a dislike with all its reasons, so the track (and an artist it blocked) can come up again. */
 export function removeDislike(dislikes: Dislike[], trackId: string): Dislike[] {
   return dislikes.filter((d) => d.track.id !== trackId)
+}
+
+/**
+ * What survives the end of a session: only the artist reasons, since blocking an artist is long-term and the rest
+ * lasts one session. A Dislike left with no reasons ends with the session (the track can come up again).
+ */
+export function endSession(dislikes: Dislike[]): Dislike[] {
+  return dislikes.flatMap((d) => (d.reasons.some((r) => r.kind === 'artist') ? [{ ...d, reasons: [{ kind: 'artist' as const }] }] : []))
 }
 
 /** The active adjustments: per feature, the latest reason wins; different features combine. */

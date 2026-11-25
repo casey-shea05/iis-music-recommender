@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeTrack } from '../testFixtures.tsx'
-import { addDislike, effects, isExcluded, removeDislike, type Dislike } from './dislikes.ts'
+import { addDislike, effects, endSession, isExcluded, removeDislike, type Dislike } from './dislikes.ts'
 
 describe('dislikes', () => {
   const slow = makeTrack({ id: 's', features: { tempo: 85, energy: 0.5, valence: 0.5, acousticness: 0.5 } })
@@ -27,5 +27,17 @@ describe('dislikes', () => {
     expect(isExcluded(other, list)).toBe(true)
     expect(isExcluded(clean, list)).toBe(false)
     expect(isExcluded(other, removeDislike(list, 's'))).toBe(false)
+  })
+})
+
+describe('endSession', () => {
+  it('keeps only artist reasons, and drops a dislike left with none', () => {
+    const a = makeTrack({ id: 'a' })
+    const b = makeTrack({ id: 'b' })
+    const list: Dislike[] = [
+      { track: a, reasons: [{ kind: 'feature', feature: 'tempo', direction: 'higher' }, { kind: 'artist' }, { kind: 'text', text: 'meh' }] },
+      { track: b, reasons: [{ kind: 'text', text: 'meh' }] },
+    ]
+    expect(endSession(list)).toEqual([{ track: a, reasons: [{ kind: 'artist' }] }])
   })
 })

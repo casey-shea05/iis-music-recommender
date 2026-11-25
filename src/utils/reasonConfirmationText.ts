@@ -9,7 +9,7 @@ export function reasonConfirmationText(reasons: readonly Reason[], text: string)
   if (reasons.length === 0) {
     return typed ? `Saved. ${TYPED_NOTE}` : 'Removed. No reason given, so nothing else changes.'
   }
-  const effects = reasons.map((r) => (r.kind === 'artist' ? 'artist blocked' : effectOf(r.feature, r.direction)))
+  const effects = reasons.flatMap((r) => (r.kind === 'text' ? [] : [r.kind === 'artist' ? 'artist blocked' : effectOf(r.feature, r.direction)]))
   const noted = `Noted: ${effects.join(', ')}.`
   return typed ? `${noted} ${TYPED_NOTE}` : noted
 }
