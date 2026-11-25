@@ -1,7 +1,6 @@
 # Literature review source papers
 submissions/literature-review/research-papers
-# Personal data and secrets
-data/catalogue.json
+# Secrets and the catalogue script's lookup cache (data/catalogue.json is committed so the app runs without keys)
 data/catalogue-cache.json
 .env
 
