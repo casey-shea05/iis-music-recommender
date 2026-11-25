@@ -8,7 +8,7 @@ import { UpNextList } from './components/UpNextList/UpNextList.tsx'
 import { usePlayback } from '@/hooks/usePlayback.tsx'
 import { Artwork } from './components/Artwork/Artwork.tsx'
 import { ExplanationText } from './components/ExplanationText/ExplanationText.tsx'
-import { ReasonPanel } from './components/ReasonPanel/ReasonPanel.tsx'
+import { PlayerTabs } from './components/PlayerTabs/PlayerTabs.tsx'
 import { SeekBar } from './components/SeekBar/SeekBar.tsx'
 import { TrackInfo } from './components/TrackInfo/TrackInfo.tsx'
 import { Transport } from './components/Transport/Transport.tsx'
@@ -57,13 +57,13 @@ export function MusicPlayer() {
             <Transport variant="expanded" />
             <VolumeControl variant="expanded" />
           </div>
-          {/* Right half: Up next on top, the reason panel below it (Heard lives on the main page). */}
-          <div className="flex min-h-0 flex-col justify-center gap-4">
+          {/* Right half: Up next on top, the Reason, Dislikes and Blocked artists tabs below it (Heard lives on the main page). */}
+          <div className="flex min-h-0 flex-col gap-4">
             {/* Up next gives way first: it scrolls inside itself when the screen is short. */}
             <div className="min-h-0 overflow-y-auto">
               <UpNextList tracks={upNext} onSelect={playTrack} />
             </div>
-            <ReasonPanel track={nowPlaying} onSubmit={dislike} />
+            <PlayerTabs track={nowPlaying} onSubmit={dislike} />
           </div>
         </div>
         <ExplanationText variant="expanded" />
