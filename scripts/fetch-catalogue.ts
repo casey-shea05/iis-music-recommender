@@ -19,6 +19,7 @@ import {
 const RECCOBEATS = 'https://api.reccobeats.com/v1'
 const RECS_PER_SEED = 20
 const FEATURE_BATCH = 40
+const IMAGE_CONCURRENCY = 5
 
 // Same variables the browser app reads, so one .env serves both.
 const clientId = process.env.SPOTIFY_CLIENT_ID
@@ -230,6 +231,28 @@ async function fetchFeatures(ids: string[]): Promise<Record<string, Features>> {
   return features
 }
 
+// Spotify album art (300x300) by track ID, from the public oEmbed endpoint: it needs no login, and the Web API's
+// batch GET /tracks returns 403 for this app. A track that fails is skipped: it just gets no image.
+async function fetchImages(ids: string[]): Promise<Record<string, string>> {
+  const images: Record<string, string> = {}
+  for (let i = 0; i < ids.length; i += IMAGE_CONCURRENCY) {
+    await Promise.all(
+      ids.slice(i, i + IMAGE_CONCURRENCY).map(async (id) => {
+        try {
+          const { thumbnail_url } = await getJson<{ thumbnail_url?: string }>(
+            `https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${id}`)}`,
+          )
+          if (thumbnail_url) images[id] = thumbnail_url
+        } catch (error) {
+          console.warn(`  image for ${id} skipped (${error instanceof Error ? error.message.slice(0, 100) : error})`)
+        }
+      }),
+    )
+    await sleep(200)
+  }
+  return images
+}
+
 // --- Main ---
 
 const accessToken = await login()
@@ -271,14 +294,21 @@ const recIds = [...new Set(recommendations.flatMap((r) => r.tracks.map((t) => t.
 console.log(`Fetching ReccoBeats features for ${recIds.length} recommended tracks...`)
 Object.assign(features, await fetchFeatures(recIds))
 
+const imageIds = Object.keys(features)
+console.log(`Fetching Spotify images for ${imageIds.length} tracks...`)
+const images = await fetchImages(imageIds)
+
 const catalogue = buildCatalogue({
   topTracks: seeds,
   topArtists,
   recommendations,
   features,
+  images,
   generatedAt: new Date().toISOString(),
 })
 
 mkdirSync('data', { recursive: true })
 writeFileSync('data/catalogue.json', JSON.stringify(catalogue, null, 2) + '\n')
+const withoutImage = catalogue.tracks.filter((t) => !t.imageUrl).length
+if (withoutImage > 0) console.warn(`  ${withoutImage} tracks have no image and will show a placeholder`)
 console.log(`Wrote data/catalogue.json with ${catalogue.tracks.length} tracks.`)

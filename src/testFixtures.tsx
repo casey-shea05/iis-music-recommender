@@ -15,6 +15,7 @@ export function makeTrack(overrides: Partial<CatalogueTrack> & { id: string }): 
     features: { tempo: 120, energy: 0.5, valence: 0.5, acousticness: 0.5 },
     anchorArtistId: 'artist-1',
     isTopTrack: false,
+    imageUrl: null,
     ...overrides,
   }
 }
