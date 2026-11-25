@@ -1,6 +1,6 @@
-// Runs once: Spotify top tracks/artists -> ReccoBeats recommendations + features -> data/catalogue.json.
-// Usage: npm run catalogue   (needs SPOTIFY_CLIENT_ID and SPOTIFY_REDIRECT_URI in .env)
-// See docs/adr/0001-technical-spike.md (decisions 1 and 2).
+// Runs once: Spotify top tracks/artists -> Last.fm similar artists' top tracks -> ReccoBeats IDs + features -> data/catalogue.json.
+// Usage: npm run catalogue   (needs SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI and LASTFM_API_KEY in .env)
+// See docs/adr/0002-catalogue-source.md (and ADR 0001, decision 2, for the features).
 import { execFile } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -10,22 +10,28 @@ import { SPOTIFY_SCOPES } from '../src/playback/spotify/scopes.ts'
 import {
   buildCatalogue,
   matchReccoTrack,
+  pickSimilarArtists,
   spotifyIdFromHref,
+  type SimilarArtist,
   type ReccoCandidate,
   type Recommendation,
   type SpotifyTrack,
 } from './catalogue.ts'
 
 const RECCOBEATS = 'https://api.reccobeats.com/v1'
-const RECS_PER_SEED = 20
+// Tune these to widen or narrow the catalogue (ADR 0002).
+const SIMILAR_ARTISTS_PER_ARTIST = 10
+const MIN_SIMILARITY = 0.3
+const TRACKS_PER_SIMILAR_ARTIST = 3
 const FEATURE_BATCH = 40
 const IMAGE_CONCURRENCY = 5
 
 // Same variables the browser app reads, so one .env serves both.
 const clientId = process.env.SPOTIFY_CLIENT_ID
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI
-if (!clientId || !REDIRECT_URI) {
-  console.error('Missing SPOTIFY_CLIENT_ID or SPOTIFY_REDIRECT_URI in .env.')
+const lastfmKey = process.env.LASTFM_API_KEY
+if (!clientId || !REDIRECT_URI || !lastfmKey) {
+  console.error('Missing SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI or LASTFM_API_KEY in .env.')
   process.exit(1)
 }
 // The script listens on the registered redirect URI, so stop the Vite dev server first if it shares the port.
@@ -46,7 +52,8 @@ async function getJson<T>(url: string, headers: Record<string, string> = {}): Pr
       await sleep((Number(res.headers.get('retry-after')) || 2) * 1000)
       continue
     }
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}: ${await res.text()}`)
+    // Keep the Last.fm key out of error messages, which get logged.
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url.replace(/api_key=[^&]+/, 'api_key=***')}: ${await res.text()}`)
     return (await res.json()) as T
   }
 }
@@ -146,50 +153,34 @@ type ReccoTrack = {
   artists: { id: string; name: string; href?: string }[]
 }
 
-async function fetchRecommendations(seeds: SpotifyTrack[]): Promise<Recommendation[]> {
-  const recommendations: Recommendation[] = []
-  for (const seed of seeds) {
-    try {
-      const { content } = await getJson<{ content: ReccoTrack[] }>(
-        `${RECCOBEATS}/track/recommendation?size=${RECS_PER_SEED}&seeds=${seed.id}`,
-      )
-      const tracks: SpotifyTrack[] = content.flatMap((t) => {
-        const id = spotifyIdFromHref(t.href)
-        if (!id) return []
-        return [
-          {
-            id,
-            title: t.trackTitle,
-            durationMs: t.durationMs,
-            artists: t.artists.map((a) => ({ id: /\/artist\/([A-Za-z0-9]+)/.exec(a.href ?? '')?.[1] ?? a.id, name: a.name })),
-          },
-        ]
-      })
-      recommendations.push({ seedTrackId: seed.id, tracks })
-      console.log(`  ${seed.title}: ${tracks.length} recommendations`)
-    } catch (error) {
-      console.warn(`  ${seed.title}: skipped (${error instanceof Error ? error.message.slice(0, 120) : error})`)
-    }
-    await sleep(200)
+function toSpotifyTrack(t: ReccoTrack): SpotifyTrack | undefined {
+  const id = spotifyIdFromHref(t.href)
+  if (!id) return undefined
+  return {
+    id,
+    title: t.trackTitle,
+    durationMs: t.durationMs,
+    isrc: t.isrc,
+    artists: t.artists.map((a) => ({ id: /\/artist\/([A-Za-z0-9]+)/.exec(a.href ?? '')?.[1] ?? a.id, name: a.name })),
   }
-  return recommendations
 }
 
 // Spotify may know a recording under a different ID than ReccoBeats. Look it up by ISRC, else search by title.
 // Search returns at most 50 per page and 200 overall, so generic titles need paging. Stop at the first match.
-async function remapByName(track: SpotifyTrack): Promise<SpotifyTrack | undefined> {
+async function findOnReccoBeats(track: SpotifyTrack): Promise<SpotifyTrack | undefined> {
   // An ISRC identifies the recording exactly and ReccoBeats accepts it as an ID, with no paging or result cap.
   if (track.isrc) {
     try {
       const { content } = await getJson<{ content: ReccoTrack[] }>(`${RECCOBEATS}/track?ids=${track.isrc}`)
-      const id = content[0] && spotifyIdFromHref(content[0].href)
-      if (id) return { ...track, id }
+      const found = content[0] && toSpotifyTrack(content[0])
+      if (found) return found
     } catch {
       // Fall through to the name search.
     }
   }
 
   const candidates: ReccoCandidate[] = []
+  const byId = new Map<string, ReccoTrack>()
   try {
     for (let page = 0, totalPages = 1; page < totalPages; page++) {
       const result = await getJson<{ content: ReccoTrack[]; totalPages: number }>(
@@ -198,16 +189,67 @@ async function remapByName(track: SpotifyTrack): Promise<SpotifyTrack | undefine
       totalPages = result.totalPages
       for (const t of result.content) {
         const id = spotifyIdFromHref(t.href)
-        if (id) candidates.push({ id, title: t.trackTitle, artists: t.artists, isrc: t.isrc })
+        if (!id) continue
+        byId.set(id, t)
+        candidates.push({ id, title: t.trackTitle, artists: t.artists, isrc: t.isrc })
       }
       const id = matchReccoTrack(track, candidates)
-      if (id) return { ...track, id }
+      if (id) return toSpotifyTrack(byId.get(id)!)
       await sleep(200)
     }
   } catch {
     // Treated as "not found"; the caller logs the skip.
   }
   return undefined
+}
+
+// --- Last.fm ---
+
+async function lastfm<T>(method: string, params: Record<string, string>): Promise<T> {
+  const query = new URLSearchParams({ method, api_key: lastfmKey!, format: 'json', autocorrect: '1', ...params })
+  const data = await getJson<T & { error?: number; message?: string }>(`https://ws.audioscrobbler.com/2.0/?${query}`)
+  // Last.fm reports many failures as a 200 with an error code in the body.
+  if (data.error) throw new Error(`Last.fm error ${data.error}: ${data.message}`)
+  return data
+}
+
+// For each top artist: its closest similar artists, then each one's top tracks, resolved to Spotify tracks via ReccoBeats.
+async function fetchRecommendations(topArtists: ArtistRef[]): Promise<Recommendation[]> {
+  const recommendations: Recommendation[] = []
+  for (const anchor of topArtists) {
+    const tracks: SpotifyTrack[] = []
+    try {
+      const { similarartists } = await lastfm<{ similarartists: { artist: SimilarArtist[] } }>('artist.getSimilar', {
+        artist: anchor.name,
+      })
+      const similar = pickSimilarArtists(similarartists.artist, {
+        limit: SIMILAR_ARTISTS_PER_ARTIST,
+        minMatch: MIN_SIMILARITY,
+      })
+      for (const artist of similar) {
+        await sleep(200)
+        try {
+          const { toptracks } = await lastfm<{ toptracks: { track: { name: string }[] } }>('artist.getTopTracks', {
+            artist,
+            limit: String(TRACKS_PER_SIMILAR_ARTIST),
+          })
+          for (const { name } of toptracks.track) {
+            const found = await findOnReccoBeats({ id: '', title: name, durationMs: 0, artists: [{ id: '', name: artist }] })
+            if (found) tracks.push(found)
+            await sleep(200)
+          }
+        } catch (error) {
+          console.warn(`    ${artist}: skipped (${error instanceof Error ? error.message.slice(0, 120) : error})`)
+        }
+      }
+      console.log(`  ${anchor.name}: ${similar.length} similar artists, ${tracks.length} tracks found`)
+    } catch (error) {
+      console.warn(`  ${anchor.name}: skipped (${error instanceof Error ? error.message.slice(0, 120) : error})`)
+    }
+    recommendations.push({ anchorArtistId: anchor.id, tracks })
+    await sleep(200)
+  }
+  return recommendations
 }
 
 async function fetchFeatures(ids: string[]): Promise<Record<string, Features>> {
@@ -264,31 +306,32 @@ console.log('Fetching ReccoBeats features for top tracks...')
 const features = await fetchFeatures(topTracks.map((t) => t.id))
 
 // Top tracks ReccoBeats doesn't know by Spotify ID: look them up by name instead.
-const seeds: SpotifyTrack[] = []
+const usableTracks: SpotifyTrack[] = []
 let remapped = 0
 for (const track of topTracks) {
   if (features[track.id]) {
-    seeds.push(track)
+    usableTracks.push(track)
     continue
   }
-  const match = await remapByName(track)
+  const match = await findOnReccoBeats(track)
   if (!match) {
     console.warn(`  ${track.title}: not in ReccoBeats, skipped`)
     continue
   }
   Object.assign(features, await fetchFeatures([match.id]))
   if (features[match.id]) {
-    seeds.push(match)
+    // Keep Spotify's own artists and metadata for the top track; only the ID differs.
+    usableTracks.push({ ...track, id: match.id })
     remapped++
   } else {
     console.warn(`  ${track.title}: matched but has no features, skipped`)
   }
   await sleep(200)
 }
-console.log(`  ${seeds.length} of ${topTracks.length} top tracks usable (${remapped} found by name)`)
+console.log(`  ${usableTracks.length} of ${topTracks.length} top tracks usable (${remapped} found by name)`)
 
-console.log('Fetching ReccoBeats recommendations...')
-const recommendations = await fetchRecommendations(seeds)
+console.log('Fetching Last.fm similar artists and their top tracks...')
+const recommendations = await fetchRecommendations(topArtists)
 
 const recIds = [...new Set(recommendations.flatMap((r) => r.tracks.map((t) => t.id)))].filter((id) => !features[id])
 console.log(`Fetching ReccoBeats features for ${recIds.length} recommended tracks...`)
@@ -299,7 +342,7 @@ console.log(`Fetching Spotify images for ${imageIds.length} tracks...`)
 const images = await fetchImages(imageIds)
 
 const catalogue = buildCatalogue({
-  topTracks: seeds,
+  topTracks: usableTracks,
   topArtists,
   recommendations,
   features,

@@ -4,6 +4,7 @@ import type { Features } from '../src/recommender/catalogue.ts'
 import {
   buildCatalogue,
   matchReccoTrack,
+  pickSimilarArtists,
   spotifyIdFromHref,
   type ReccoCandidate,
   type SpotifyTrack,
@@ -38,6 +39,20 @@ describe('spotifyIdFromHref', () => {
   })
 })
 
+describe('pickSimilarArtists', () => {
+  it('keeps the closest artists scoring at least the minimum, best first', () => {
+    // Last.fm sends `match` as a string.
+    const similar = [
+      { name: 'Low', match: '0.1' },
+      { name: 'Mid', match: '0.5' },
+      { name: 'Top', match: '0.9' },
+      { name: 'Edge', match: '0.3' },
+    ]
+    expect(pickSimilarArtists(similar, { limit: 3, minMatch: 0.3 })).toEqual(['Top', 'Mid', 'Edge'])
+    expect(pickSimilarArtists(similar, { limit: 2, minMatch: 0.3 })).toEqual(['Top', 'Mid'])
+  })
+})
+
 describe('buildCatalogue', () => {
   const topArtists = [
     { id: 'A1', name: 'Artist One' },
@@ -58,31 +73,20 @@ describe('buildCatalogue', () => {
     expect(valence).toBeCloseTo(0.6)
     expect(acousticness).toBeCloseTo(0.4)
     expect(catalogue.profile.topArtists).toEqual(topArtists)
-    expect(catalogue.source).toBe('spotify+reccobeats')
+    expect(catalogue.source).toBe('spotify+lastfm+reccobeats')
     expect(catalogue.generatedAt).toBe(generatedAt)
   })
 
-  it('anchors a recommendation on the top artist of the track that seeded it', () => {
+  it('anchors a recommendation on the top artist it was found from', () => {
     const catalogue = buildCatalogue({
       topTracks: [track('t1', 'A1')],
       topArtists,
-      recommendations: [{ seedTrackId: 't1', tracks: [track('r1', 'X9')] }],
+      recommendations: [{ anchorArtistId: 'A1', tracks: [track('r1', 'X9')] }],
       features: { t1: f(100), r1: f(90) },
       generatedAt,
     })
     const rec = catalogue.tracks.find((t) => t.id === 'r1')
     expect(rec).toMatchObject({ anchorArtistId: 'A1', isTopTrack: false })
-  })
-
-  it('falls back to the seed’s own artist when it is not a top artist', () => {
-    const catalogue = buildCatalogue({
-      topTracks: [track('t1', 'Z5')],
-      topArtists,
-      recommendations: [{ seedTrackId: 't1', tracks: [track('r1', 'X9')] }],
-      features: { t1: f(100), r1: f(90) },
-      generatedAt,
-    })
-    expect(catalogue.tracks.find((t) => t.id === 'r1')?.anchorArtistId).toBe('Z5')
   })
 
   it('keeps top tracks, flagged and anchored on themselves', () => {
@@ -102,7 +106,7 @@ describe('buildCatalogue', () => {
     const catalogue = buildCatalogue({
       topTracks: [track('t1', 'A1')],
       topArtists,
-      recommendations: [{ seedTrackId: 't1', tracks: [track('r1', 'X9')] }],
+      recommendations: [{ anchorArtistId: 'A1', tracks: [track('r1', 'X9')] }],
       features: { t1: f(100), r1: f(90) },
       images: { t1: 'https://img.test/t1.jpg' },
       generatedAt,
@@ -117,7 +121,7 @@ describe('buildCatalogue', () => {
     const catalogue = buildCatalogue({
       topTracks: [track('t1', 'A1')],
       topArtists,
-      recommendations: [{ seedTrackId: 't1', tracks: [track('r1', 'X9'), track('r2', 'X8')] }],
+      recommendations: [{ anchorArtistId: 'A1', tracks: [track('r1', 'X9'), track('r2', 'X8')] }],
       features: { t1: f(100), r1: f(90) },
       generatedAt,
     })
@@ -129,8 +133,8 @@ describe('buildCatalogue', () => {
       topTracks: [track('t1', 'A1'), track('t2', 'A2')],
       topArtists,
       recommendations: [
-        { seedTrackId: 't1', tracks: [track('r1', 'X9'), track('t2', 'A2')] },
-        { seedTrackId: 't2', tracks: [track('r1', 'X9')] },
+        { anchorArtistId: 'A1', tracks: [track('r1', 'X9'), track('t2', 'A2')] },
+        { anchorArtistId: 'A2', tracks: [track('r1', 'X9')] },
       ],
       features: { t1: f(100), t2: f(110), r1: f(90) },
       generatedAt,

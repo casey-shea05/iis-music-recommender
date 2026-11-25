@@ -14,14 +14,32 @@ export type SpotifyTrack = {
 export type ReccoCandidate = {
   id: string
   title: string
-  artists: { name: string }[]
+  /** `id` is the Spotify artist ID, when ReccoBeats gives one. */
+  artists: { id?: string; name: string }[]
   isrc?: string
 }
 
+/** Tracks Last.fm picked as similar to one of the user's top artists. */
 export type Recommendation = {
-  /** The top track whose Spotify ID seeded this ReccoBeats request. */
-  seedTrackId: string
+  /** The top artist the similar artists were found from. */
+  anchorArtistId: string
   tracks: SpotifyTrack[]
+}
+
+/** An entry from Last.fm's `artist.getSimilar`. `match` arrives as a string such as "0.87". */
+export type SimilarArtist = { name: string; match: string | number }
+
+/** The closest similar artists: at least `minMatch`, best first, at most `limit`. */
+export function pickSimilarArtists(
+  similar: SimilarArtist[],
+  { limit, minMatch }: { limit: number; minMatch: number },
+): string[] {
+  return similar
+    .map((a) => ({ name: a.name, match: Number(a.match) }))
+    .filter((a) => a.match >= minMatch)
+    .sort((a, b) => b.match - a.match)
+    .slice(0, limit)
+    .map((a) => a.name)
 }
 
 export function spotifyIdFromHref(href: string): string | undefined {
@@ -78,9 +96,9 @@ export function buildCatalogue(input: {
   const { topTracks, topArtists, recommendations, features, images = {}, generatedAt } = input
   const topArtistIds = new Set(topArtists.map((a) => a.id))
 
-  // The anchor artist is the top artist behind the seed track, else the seed's own first artist.
-  const anchorFor = (seed: SpotifyTrack) =>
-    (seed.artists.find((a) => topArtistIds.has(a.id)) ?? seed.artists[0])?.id
+  // A top track's anchor artist is its top artist, else its own first artist.
+  const anchorFor = (top: SpotifyTrack) =>
+    (top.artists.find((a) => topArtistIds.has(a.id)) ?? top.artists[0])?.id
 
   const tracks = new Map<string, CatalogueTrack>()
   const add = (track: SpotifyTrack, anchorArtistId: string | undefined, isTopTrack: boolean) => {
@@ -97,11 +115,8 @@ export function buildCatalogue(input: {
 
   for (const top of topTracks) add(top, anchorFor(top), true)
 
-  const topById = new Map(topTracks.map((t) => [t.id, t]))
   for (const rec of recommendations) {
-    const seed = topById.get(rec.seedTrackId)
-    if (!seed) continue
-    for (const track of rec.tracks) add(track, anchorFor(seed), false)
+    for (const track of rec.tracks) add(track, rec.anchorArtistId, false)
   }
 
   const topFeatures = topTracks.flatMap((t) => (features[t.id] ? [features[t.id]] : []))
@@ -110,7 +125,7 @@ export function buildCatalogue(input: {
   }
 
   return {
-    source: 'spotify+reccobeats',
+    source: 'spotify+lastfm+reccobeats',
     generatedAt,
     profile: { features: averageFeatures(topFeatures), topArtists },
     tracks: [...tracks.values()],
