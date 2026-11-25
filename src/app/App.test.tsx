@@ -46,7 +46,7 @@ describe('disliking from the Reason panel', () => {
     dislikeWith() // removes Alpha from Heard as well
     expect(within(screen.getByRole('region', { name: 'Heard' })).queryByText('Alpha')).not.toBeInTheDocument()
     press('Start new queue')
-    expect(JSON.parse(localStorage.getItem('dislikes')!).map((d: { track: { id: string } }) => d.track.id)).toEqual(['b'])
+    expect(JSON.parse(localStorage.getItem('blockedArtists')!).map((b: { tracks: { id: string }[] }) => b.tracks[0].id)).toEqual(['b'])
     expect(screen.getByText('Alpha')).toBeInTheDocument() // Alpha's dislike ended with the session
   })
 })

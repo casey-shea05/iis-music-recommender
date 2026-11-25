@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeTrack } from '../testFixtures.tsx'
-import { addDislike, effects, endSession, isExcluded, removeDislike, type Dislike } from './dislikes.ts'
+import { addDislike, blockArtist, effects, endSession, isExcluded, removeDislike, unblockArtist, type Dislike } from './dislikes.ts'
 
 describe('dislikes', () => {
   const slow = makeTrack({ id: 's', features: { tempo: 85, energy: 0.5, valence: 0.5, acousticness: 0.5 } })
@@ -19,25 +19,35 @@ describe('dislikes', () => {
     ])
   })
 
-  it('excludes disliked tracks and a blocked artist, until the dislike is removed', () => {
-    const other = makeTrack({ id: 'o', artists: [{ id: 'artist-1', name: 'Some Artist' }] })
-    const clean = makeTrack({ id: 'c', artists: [{ id: 'artist-2', name: 'Else' }] })
-    const list = addDislike([], { track: slow, reasons: [{ kind: 'artist' }] })
-    expect(isExcluded(slow, list)).toBe(true)
-    expect(isExcluded(other, list)).toBe(true)
-    expect(isExcluded(clean, list)).toBe(false)
-    expect(isExcluded(other, removeDislike(list, 's'))).toBe(false)
-  })
-})
+  const artist = { id: 'artist-1', name: 'Some Artist' }
+  const blockedTrack = makeTrack({ id: 'b', artists: [artist] })
 
-describe('endSession', () => {
-  it('keeps only artist reasons, and drops a dislike left with none', () => {
-    const a = makeTrack({ id: 'a' })
-    const b = makeTrack({ id: 'b' })
-    const list: Dislike[] = [
-      { track: a, reasons: [{ kind: 'feature', feature: 'tempo', direction: 'higher' }, { kind: 'artist' }, { kind: 'text', text: 'meh' }] },
-      { track: b, reasons: [{ kind: 'text', text: 'meh' }] },
-    ]
-    expect(endSession(list)).toEqual([{ track: a, reasons: [{ kind: 'artist' }] }])
+  it('adds a block for the primary artist, with the track that blocked them', () => {
+    const once = blockArtist([], blockedTrack)
+    expect(once).toEqual([{ ...artist, tracks: [{ id: 'b', title: blockedTrack.title }] }])
+    expect(blockArtist(once, makeTrack({ id: 'b2', artists: [artist] }))[0].tracks).toHaveLength(2)
+  })
+
+  it('excludes disliked tracks and tracks crediting a blocked artist', () => {
+    const blocked = blockArtist([], blockedTrack)
+    const clean = makeTrack({ id: 'c', artists: [{ id: 'artist-2', name: 'Else' }] })
+    expect(isExcluded(makeTrack({ id: 'o', artists: [artist] }), [], blocked)).toBe(true)
+    expect(isExcluded(clean, [], blocked)).toBe(false)
+    expect(isExcluded(clean, [{ track: clean, reasons: [] }], [])).toBe(true)
+  })
+
+  it('keeps the block when the dislike is removed or the session ends', () => {
+    const blocked = blockArtist([], blockedTrack)
+    const list = addDislike([], { track: blockedTrack, reasons: [{ kind: 'artist' }] })
+    expect(removeDislike(list, 'b')).toEqual([])
+    expect(endSession()).toEqual([])
+    expect(isExcluded(makeTrack({ id: 'o', artists: [artist] }), removeDislike(list, 'b'), blocked)).toBe(true)
+  })
+
+  it('unblocks an artist and strips the artist reason from session dislikes', () => {
+    const list: Dislike[] = [{ track: blockedTrack, reasons: [tooSlow, { kind: 'artist' }] }]
+    const result = unblockArtist(blockArtist([], blockedTrack), list, 'artist-1')
+    expect(result.blockedArtists).toEqual([])
+    expect(result.dislikes).toEqual([{ track: blockedTrack, reasons: [tooSlow] }])
   })
 })
